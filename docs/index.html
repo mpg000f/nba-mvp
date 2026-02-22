@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NBA MVP Predictions — ML Model</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header>
+    <h1>NBA <span>MVP</span> Predictions</h1>
+    <p class="subtitle">Machine learning model tested on 46 seasons of historical data</p>
+    <div class="summary-stats" id="summary-stats"></div>
+  </header>
+
+  <div class="container">
+    <div class="tabs">
+      <button class="tab-btn active" data-tab="years">Year-by-Year Results</button>
+      <button class="tab-btn" data-tab="deserving">Most / Least Deserving</button>
+    </div>
+
+    <!-- Tab 1: Year-by-Year -->
+    <div id="tab-years" class="tab-content">
+      <div class="filter-bar">
+        <label for="year-from">From:</label>
+        <select id="year-from"></select>
+        <label for="year-to">To:</label>
+        <select id="year-to"></select>
+        <label for="match-filter">Show:</label>
+        <select id="match-filter">
+          <option value="all">All</option>
+          <option value="correct">Correct only</option>
+          <option value="top3">Top-3 hits</option>
+          <option value="miss">Misses only</option>
+        </select>
+      </div>
+      <table id="years-table">
+        <thead>
+          <tr>
+            <th>Year</th>
+            <th>Actual MVP</th>
+            <th>Predicted #1</th>
+            <th>Match</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+
+      <div class="model-table-wrap">
+        <h3>Model Comparison</h3>
+        <table id="model-table">
+          <thead>
+            <tr>
+              <th>Model</th>
+              <th>Top-1</th>
+              <th>Top-3</th>
+              <th>Top-5</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Tab 2: Deserving -->
+    <div id="tab-deserving" class="tab-content" style="display:none">
+      <div class="deserving-section">
+        <h3>Biggest Snubs — Highest Predicted Share Among Non-Winners</h3>
+        <table id="snubs-table">
+          <thead>
+            <tr>
+              <th class="sortable" data-col="player">Player</th>
+              <th class="sortable" data-col="year">Year</th>
+              <th class="sortable" data-col="team">Team</th>
+              <th class="sortable" data-col="predicted_share">Predicted Share</th>
+              <th class="sortable" data-col="actual_share">Actual Share</th>
+              <th>Who Won</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+
+      <div class="deserving-section">
+        <h3>Least Statistically Deserving Winners — Lowest Predicted Share</h3>
+        <table id="least-table">
+          <thead>
+            <tr>
+              <th class="sortable" data-col="player">Player</th>
+              <th class="sortable" data-col="year">Year</th>
+              <th class="sortable" data-col="team">Team</th>
+              <th class="sortable" data-col="predicted_share">Predicted Share</th>
+              <th class="sortable" data-col="actual_share">Actual Share</th>
+              <th>Model Predicted</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    <p>Built with XGBoost + leave-one-year-out cross-validation &middot;
+      <a href="https://github.com/mpgra/nba-mvp">Source on GitHub</a></p>
+  </footer>
+
+<script>
+let DATA = null;
+
+async function init() {
+  const resp = await fetch("data.json");
+  DATA = await resp.json();
+  renderSummary();
+  populateFilters();
+  renderYears();
+  renderModels();
+  renderDeserving();
+  setupTabs();
+  setupSort();
+}
+
+function renderSummary() {
+  const s = DATA.summary;
+  const pct = ((s.top1 / s.n) * 100).toFixed(1);
+  document.getElementById("summary-stats").innerHTML = `
+    <div class="stat-box"><div class="num">${s.top1}/${s.n}</div><div class="label">Top-1 Correct (${pct}%)</div></div>
+    <div class="stat-box"><div class="num">${s.top3}/${s.n}</div><div class="label">Top-3 Correct</div></div>
+    <div class="stat-box"><div class="num">${s.top5}/${s.n}</div><div class="label">Top-5 Correct</div></div>
+  `;
+}
+
+function populateFilters() {
+  const years = DATA.years.map(y => y.year);
+  const fromSel = document.getElementById("year-from");
+  const toSel = document.getElementById("year-to");
+  years.forEach(y => {
+    fromSel.add(new Option(y, y));
+    toSel.add(new Option(y, y));
+  });
+  fromSel.value = years[0];
+  toSel.value = years[years.length - 1];
+  fromSel.addEventListener("change", renderYears);
+  toSel.addEventListener("change", renderYears);
+  document.getElementById("match-filter").addEventListener("change", renderYears);
+}
+
+function matchIcon(m) {
+  if (m === "correct") return '<span class="match-icon match-correct">\u2713</span>';
+  if (m === "top3") return '<span class="match-icon match-top3">~</span>';
+  return '<span class="match-icon match-miss">\u2717</span>';
+}
+
+function renderYears() {
+  const from = +document.getElementById("year-from").value;
+  const to = +document.getElementById("year-to").value;
+  const mf = document.getElementById("match-filter").value;
+  const tbody = document.querySelector("#years-table tbody");
+  tbody.innerHTML = "";
+
+  DATA.years.filter(y => y.year >= from && y.year <= to).forEach(y => {
+    if (mf !== "all" && y.match !== mf) return;
+
+    const tr = document.createElement("tr");
+    tr.className = `row-${y.match} clickable`;
+    tr.innerHTML = `
+      <td>${y.year}</td>
+      <td>${y.actual_mvp}</td>
+      <td>${y.predicted_mvp}</td>
+      <td>${matchIcon(y.match)}</td>
+    `;
+    tr.addEventListener("click", () => toggleDetail(tr, y));
+    tbody.appendChild(tr);
+  });
+}
+
+function toggleDetail(tr, y) {
+  const next = tr.nextElementSibling;
+  if (next && next.classList.contains("detail-row")) {
+    next.remove();
+    return;
+  }
+  // Remove any other open detail
+  document.querySelectorAll(".detail-row").forEach(r => r.remove());
+
+  const detail = document.createElement("tr");
+  detail.className = "detail-row";
+  const td = document.createElement("td");
+  td.colSpan = 4;
+
+  const makeList = (items, shareKey) =>
+    items.map(p => `<li>${p.player} <span class="team">${p.team}</span> <span class="share">(${p.share.toFixed(3)})</span></li>`).join("");
+
+  td.innerHTML = `
+    <div class="detail-content">
+      <div class="detail-panel">
+        <h4>Actual Top 5 (by vote share)</h4>
+        <ol>${makeList(y.actual_top5)}</ol>
+      </div>
+      <div class="detail-panel">
+        <h4>Predicted Top 5</h4>
+        <ol>${makeList(y.predicted_top5)}</ol>
+      </div>
+    </div>
+  `;
+  detail.appendChild(td);
+  tr.after(detail);
+}
+
+function renderModels() {
+  const tbody = document.querySelector("#model-table tbody");
+  DATA.models.forEach(m => {
+    const tr = document.createElement("tr");
+    if (m.model === DATA.best_model) tr.className = "best-model";
+    const t3 = m.top3 > 0 ? `${m.top3}/${m.n}` : "-";
+    const t5 = m.top5 > 0 ? `${m.top5}/${m.n}` : "-";
+    tr.innerHTML = `
+      <td>${m.model}${m.model === DATA.best_model ? " \u2b50" : ""}</td>
+      <td>${m.top1}/${m.n}</td>
+      <td>${t3}</td>
+      <td>${t5}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+function renderDeserving() {
+  const d = DATA.deserving;
+
+  // Snubs: non-winners, sorted by predicted share desc
+  const snubs = d.filter(p => !p.was_mvp)
+    .sort((a, b) => b.predicted_share - a.predicted_share)
+    .slice(0, 50);
+
+  const snubsTbody = document.querySelector("#snubs-table tbody");
+  snubs.forEach(p => {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${p.player}</td>
+      <td>${p.year}</td>
+      <td>${p.team}</td>
+      <td>${p.predicted_share.toFixed(4)}</td>
+      <td>${p.actual_share.toFixed(4)}</td>
+      <td>${p.actual_mvp}</td>
+    `;
+    snubsTbody.appendChild(tr);
+  });
+
+  // Least deserving winners: winners sorted by predicted share asc
+  const winners = d.filter(p => p.was_mvp)
+    .sort((a, b) => a.predicted_share - b.predicted_share);
+
+  // For each winner, find who the model predicted
+  const yearPredMap = {};
+  DATA.years.forEach(y => { yearPredMap[y.year] = y.predicted_mvp; });
+
+  const leastTbody = document.querySelector("#least-table tbody");
+  winners.forEach(p => {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${p.player}</td>
+      <td>${p.year}</td>
+      <td>${p.team}</td>
+      <td>${p.predicted_share.toFixed(4)}</td>
+      <td>${p.actual_share.toFixed(4)}</td>
+      <td>${yearPredMap[p.year] || "-"}</td>
+    `;
+    leastTbody.appendChild(tr);
+  });
+
+  // Store data on tables for sorting
+  document.getElementById("snubs-table")._data = snubs;
+  document.getElementById("least-table")._data = winners;
+}
+
+function setupTabs() {
+  document.querySelectorAll(".tab-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+      document.querySelectorAll(".tab-content").forEach(c => c.style.display = "none");
+      document.getElementById("tab-" + btn.dataset.tab).style.display = "block";
+    });
+  });
+}
+
+function setupSort() {
+  document.querySelectorAll("th.sortable").forEach(th => {
+    th.addEventListener("click", () => {
+      const table = th.closest("table");
+      const tbody = table.querySelector("tbody");
+      const col = th.dataset.col;
+      const isNum = ["year", "predicted_share", "actual_share", "pts"].includes(col);
+
+      // Toggle direction
+      const wasAsc = th.classList.contains("sort-asc");
+      table.querySelectorAll("th").forEach(h => { h.classList.remove("sort-asc", "sort-desc"); });
+      const dir = wasAsc ? "desc" : "asc";
+      th.classList.add("sort-" + dir);
+
+      const rows = Array.from(tbody.querySelectorAll("tr"));
+      const colIdx = Array.from(th.parentElement.children).indexOf(th);
+      rows.sort((a, b) => {
+        let va = a.children[colIdx].textContent.trim();
+        let vb = b.children[colIdx].textContent.trim();
+        if (isNum) { va = parseFloat(va); vb = parseFloat(vb); }
+        if (va < vb) return dir === "asc" ? -1 : 1;
+        if (va > vb) return dir === "asc" ? 1 : -1;
+        return 0;
+      });
+      rows.forEach(r => tbody.appendChild(r));
+    });
+  });
+}
+
+init();
+</script>
+</body>
+</html>

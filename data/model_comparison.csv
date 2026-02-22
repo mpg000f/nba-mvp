@@ -1,0 +1,10 @@
+Model,Top1,Top3,Top5,N
+Lasso (45),24,41,43,46
+XGB-Regress (45),31,44,44,46
+XGB-Regress+Narr (51),32,44,44,46
+XGB-Ranker (51),31,44,44,46
+XGB-Binary (51),28,41,43,46
+XGB-Top3 (51),27,40,43,46
+XGB+PostProcess (51),32,44,44,46
+Ensemble-Vote,32,0,0,46
+Ensemble-AvgRank,31,43,44,46

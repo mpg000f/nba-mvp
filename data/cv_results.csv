@@ -1,0 +1,415 @@
+Model,Year,Actual_MVP,Predicted_MVP,Top1_Correct
+Lasso (45),1980,Kareem Abdul-Jabbar,Kareem Abdul-Jabbar,True
+Lasso (45),1981,Julius Erving,Kareem Abdul-Jabbar,False
+Lasso (45),1982,Moses Malone,Moses Malone,True
+Lasso (45),1983,Moses Malone,Larry Bird,False
+Lasso (45),1984,Larry Bird,Larry Bird,True
+Lasso (45),1985,Larry Bird,Larry Bird,True
+Lasso (45),1986,Larry Bird,Larry Bird,True
+Lasso (45),1987,Magic Johnson,Michael Jordan,False
+Lasso (45),1988,Michael Jordan,Michael Jordan,True
+Lasso (45),1989,Magic Johnson,Michael Jordan,False
+Lasso (45),1990,Magic Johnson,Michael Jordan,False
+Lasso (45),1991,Michael Jordan,Michael Jordan,True
+Lasso (45),1992,Michael Jordan,Michael Jordan,True
+Lasso (45),1993,Charles Barkley,Michael Jordan,False
+Lasso (45),1994,Hakeem Olajuwon,David Robinson,False
+Lasso (45),1995,David Robinson,David Robinson,True
+Lasso (45),1996,Michael Jordan,Michael Jordan,True
+Lasso (45),1997,Karl Malone,Michael Jordan,False
+Lasso (45),1998,Michael Jordan,Karl Malone,False
+Lasso (45),1999,Tim Duncan,Tim Duncan,True
+Lasso (45),2000,Shaquille O'Neal,Shaquille O'Neal,True
+Lasso (45),2001,Allen Iverson,Shaquille O'Neal,False
+Lasso (45),2002,Tim Duncan,Tim Duncan,True
+Lasso (45),2003,Tim Duncan,Tracy McGrady,False
+Lasso (45),2004,Kevin Garnett,Kevin Garnett,True
+Lasso (45),2005,Steve Nash,Kevin Garnett,False
+Lasso (45),2006,Steve Nash,LeBron James,False
+Lasso (45),2007,Dirk Nowitzki,LeBron James,False
+Lasso (45),2008,Kobe Bryant,LeBron James,False
+Lasso (45),2009,LeBron James,LeBron James,True
+Lasso (45),2010,LeBron James,LeBron James,True
+Lasso (45),2011,Derrick Rose,LeBron James,False
+Lasso (45),2012,LeBron James,LeBron James,True
+Lasso (45),2013,LeBron James,LeBron James,True
+Lasso (45),2014,Kevin Durant,Kevin Durant,True
+Lasso (45),2015,Stephen Curry,James Harden,False
+Lasso (45),2016,Stephen Curry,Stephen Curry,True
+Lasso (45),2017,Russell Westbrook,Russell Westbrook,True
+Lasso (45),2018,James Harden,LeBron James,False
+Lasso (45),2019,Giannis Antetokounmpo,James Harden,False
+Lasso (45),2020,Giannis Antetokounmpo,James Harden,False
+Lasso (45),2021,Nikola JokiÄ,Nikola JokiÄ,True
+Lasso (45),2022,Nikola JokiÄ,Nikola JokiÄ,True
+Lasso (45),2023,Joel Embiid,Nikola JokiÄ,False
+Lasso (45),2024,Nikola JokiÄ,Nikola JokiÄ,True
+Lasso (45),2025,Shai Gilgeous-Alexander,Nikola JokiÄ,False
+XGB-Regress (45),1980,Kareem Abdul-Jabbar,Kareem Abdul-Jabbar,True
+XGB-Regress (45),1981,Julius Erving,Julius Erving,True
+XGB-Regress (45),1982,Moses Malone,Larry Bird,False
+XGB-Regress (45),1983,Moses Malone,Larry Bird,False
+XGB-Regress (45),1984,Larry Bird,Larry Bird,True
+XGB-Regress (45),1985,Larry Bird,Larry Bird,True
+XGB-Regress (45),1986,Larry Bird,Larry Bird,True
+XGB-Regress (45),1987,Magic Johnson,Magic Johnson,True
+XGB-Regress (45),1988,Michael Jordan,Larry Bird,False
+XGB-Regress (45),1989,Magic Johnson,Michael Jordan,False
+XGB-Regress (45),1990,Magic Johnson,Magic Johnson,True
+XGB-Regress (45),1991,Michael Jordan,Michael Jordan,True
+XGB-Regress (45),1992,Michael Jordan,Michael Jordan,True
+XGB-Regress (45),1993,Charles Barkley,Michael Jordan,False
+XGB-Regress (45),1994,Hakeem Olajuwon,David Robinson,False
+XGB-Regress (45),1995,David Robinson,David Robinson,True
+XGB-Regress (45),1996,Michael Jordan,Michael Jordan,True
+XGB-Regress (45),1997,Karl Malone,Michael Jordan,False
+XGB-Regress (45),1998,Michael Jordan,Karl Malone,False
+XGB-Regress (45),1999,Tim Duncan,Tim Duncan,True
+XGB-Regress (45),2000,Shaquille O'Neal,Shaquille O'Neal,True
+XGB-Regress (45),2001,Allen Iverson,Shaquille O'Neal,False
+XGB-Regress (45),2002,Tim Duncan,Tim Duncan,True
+XGB-Regress (45),2003,Tim Duncan,Tim Duncan,True
+XGB-Regress (45),2004,Kevin Garnett,Kevin Garnett,True
+XGB-Regress (45),2005,Steve Nash,Kevin Garnett,False
+XGB-Regress (45),2006,Steve Nash,Dirk Nowitzki,False
+XGB-Regress (45),2007,Dirk Nowitzki,Dirk Nowitzki,True
+XGB-Regress (45),2008,Kobe Bryant,LeBron James,False
+XGB-Regress (45),2009,LeBron James,LeBron James,True
+XGB-Regress (45),2010,LeBron James,LeBron James,True
+XGB-Regress (45),2011,Derrick Rose,LeBron James,False
+XGB-Regress (45),2012,LeBron James,LeBron James,True
+XGB-Regress (45),2013,LeBron James,LeBron James,True
+XGB-Regress (45),2014,Kevin Durant,Kevin Durant,True
+XGB-Regress (45),2015,Stephen Curry,Stephen Curry,True
+XGB-Regress (45),2016,Stephen Curry,Stephen Curry,True
+XGB-Regress (45),2017,Russell Westbrook,Kawhi Leonard,False
+XGB-Regress (45),2018,James Harden,James Harden,True
+XGB-Regress (45),2019,Giannis Antetokounmpo,Giannis Antetokounmpo,True
+XGB-Regress (45),2020,Giannis Antetokounmpo,Giannis Antetokounmpo,True
+XGB-Regress (45),2021,Nikola JokiÄ,Nikola JokiÄ,True
+XGB-Regress (45),2022,Nikola JokiÄ,Giannis Antetokounmpo,False
+XGB-Regress (45),2023,Joel Embiid,Nikola JokiÄ,False
+XGB-Regress (45),2024,Nikola JokiÄ,Nikola JokiÄ,True
+XGB-Regress (45),2025,Shai Gilgeous-Alexander,Shai Gilgeous-Alexander,True
+XGB-Regress+Narr (51),1980,Kareem Abdul-Jabbar,Kareem Abdul-Jabbar,True
+XGB-Regress+Narr (51),1981,Julius Erving,Julius Erving,True
+XGB-Regress+Narr (51),1982,Moses Malone,Larry Bird,False
+XGB-Regress+Narr (51),1983,Moses Malone,Moses Malone,True
+XGB-Regress+Narr (51),1984,Larry Bird,Larry Bird,True
+XGB-Regress+Narr (51),1985,Larry Bird,Larry Bird,True
+XGB-Regress+Narr (51),1986,Larry Bird,Larry Bird,True
+XGB-Regress+Narr (51),1987,Magic Johnson,Magic Johnson,True
+XGB-Regress+Narr (51),1988,Michael Jordan,Michael Jordan,True
+XGB-Regress+Narr (51),1989,Magic Johnson,Michael Jordan,False
+XGB-Regress+Narr (51),1990,Magic Johnson,Magic Johnson,True
+XGB-Regress+Narr (51),1991,Michael Jordan,Michael Jordan,True
+XGB-Regress+Narr (51),1992,Michael Jordan,Michael Jordan,True
+XGB-Regress+Narr (51),1993,Charles Barkley,Michael Jordan,False
+XGB-Regress+Narr (51),1994,Hakeem Olajuwon,David Robinson,False
+XGB-Regress+Narr (51),1995,David Robinson,David Robinson,True
+XGB-Regress+Narr (51),1996,Michael Jordan,Michael Jordan,True
+XGB-Regress+Narr (51),1997,Karl Malone,Karl Malone,True
+XGB-Regress+Narr (51),1998,Michael Jordan,Karl Malone,False
+XGB-Regress+Narr (51),1999,Tim Duncan,Tim Duncan,True
+XGB-Regress+Narr (51),2000,Shaquille O'Neal,Shaquille O'Neal,True
+XGB-Regress+Narr (51),2001,Allen Iverson,Shaquille O'Neal,False
+XGB-Regress+Narr (51),2002,Tim Duncan,Tim Duncan,True
+XGB-Regress+Narr (51),2003,Tim Duncan,Tim Duncan,True
+XGB-Regress+Narr (51),2004,Kevin Garnett,Kevin Garnett,True
+XGB-Regress+Narr (51),2005,Steve Nash,Amar'e Stoudemire,False
+XGB-Regress+Narr (51),2006,Steve Nash,Dirk Nowitzki,False
+XGB-Regress+Narr (51),2007,Dirk Nowitzki,Dirk Nowitzki,True
+XGB-Regress+Narr (51),2008,Kobe Bryant,LeBron James,False
+XGB-Regress+Narr (51),2009,LeBron James,LeBron James,True
+XGB-Regress+Narr (51),2010,LeBron James,LeBron James,True
+XGB-Regress+Narr (51),2011,Derrick Rose,LeBron James,False
+XGB-Regress+Narr (51),2012,LeBron James,LeBron James,True
+XGB-Regress+Narr (51),2013,LeBron James,LeBron James,True
+XGB-Regress+Narr (51),2014,Kevin Durant,Kevin Durant,True
+XGB-Regress+Narr (51),2015,Stephen Curry,Stephen Curry,True
+XGB-Regress+Narr (51),2016,Stephen Curry,Stephen Curry,True
+XGB-Regress+Narr (51),2017,Russell Westbrook,Russell Westbrook,True
+XGB-Regress+Narr (51),2018,James Harden,James Harden,True
+XGB-Regress+Narr (51),2019,Giannis Antetokounmpo,Giannis Antetokounmpo,True
+XGB-Regress+Narr (51),2020,Giannis Antetokounmpo,Giannis Antetokounmpo,True
+XGB-Regress+Narr (51),2021,Nikola JokiÄ,Nikola JokiÄ,True
+XGB-Regress+Narr (51),2022,Nikola JokiÄ,Joel Embiid,False
+XGB-Regress+Narr (51),2023,Joel Embiid,Nikola JokiÄ,False
+XGB-Regress+Narr (51),2024,Nikola JokiÄ,Nikola JokiÄ,True
+XGB-Regress+Narr (51),2025,Shai Gilgeous-Alexander,Shai Gilgeous-Alexander,True
+XGB-Ranker (51),1980,Kareem Abdul-Jabbar,Julius Erving,False
+XGB-Ranker (51),1981,Julius Erving,Julius Erving,True
+XGB-Ranker (51),1982,Moses Malone,Moses Malone,True
+XGB-Ranker (51),1983,Moses Malone,Larry Bird,False
+XGB-Ranker (51),1984,Larry Bird,Larry Bird,True
+XGB-Ranker (51),1985,Larry Bird,Larry Bird,True
+XGB-Ranker (51),1986,Larry Bird,Larry Bird,True
+XGB-Ranker (51),1987,Magic Johnson,Magic Johnson,True
+XGB-Ranker (51),1988,Michael Jordan,Larry Bird,False
+XGB-Ranker (51),1989,Magic Johnson,Magic Johnson,True
+XGB-Ranker (51),1990,Magic Johnson,Magic Johnson,True
+XGB-Ranker (51),1991,Michael Jordan,Michael Jordan,True
+XGB-Ranker (51),1992,Michael Jordan,Michael Jordan,True
+XGB-Ranker (51),1993,Charles Barkley,Michael Jordan,False
+XGB-Ranker (51),1994,Hakeem Olajuwon,David Robinson,False
+XGB-Ranker (51),1995,David Robinson,David Robinson,True
+XGB-Ranker (51),1996,Michael Jordan,Michael Jordan,True
+XGB-Ranker (51),1997,Karl Malone,Karl Malone,True
+XGB-Ranker (51),1998,Michael Jordan,Karl Malone,False
+XGB-Ranker (51),1999,Tim Duncan,Tim Duncan,True
+XGB-Ranker (51),2000,Shaquille O'Neal,Shaquille O'Neal,True
+XGB-Ranker (51),2001,Allen Iverson,Shaquille O'Neal,False
+XGB-Ranker (51),2002,Tim Duncan,Tim Duncan,True
+XGB-Ranker (51),2003,Tim Duncan,Tim Duncan,True
+XGB-Ranker (51),2004,Kevin Garnett,Kevin Garnett,True
+XGB-Ranker (51),2005,Steve Nash,LeBron James,False
+XGB-Ranker (51),2006,Steve Nash,LeBron James,False
+XGB-Ranker (51),2007,Dirk Nowitzki,Dirk Nowitzki,True
+XGB-Ranker (51),2008,Kobe Bryant,LeBron James,False
+XGB-Ranker (51),2009,LeBron James,LeBron James,True
+XGB-Ranker (51),2010,LeBron James,LeBron James,True
+XGB-Ranker (51),2011,Derrick Rose,LeBron James,False
+XGB-Ranker (51),2012,LeBron James,LeBron James,True
+XGB-Ranker (51),2013,LeBron James,LeBron James,True
+XGB-Ranker (51),2014,Kevin Durant,Kevin Durant,True
+XGB-Ranker (51),2015,Stephen Curry,Stephen Curry,True
+XGB-Ranker (51),2016,Stephen Curry,Stephen Curry,True
+XGB-Ranker (51),2017,Russell Westbrook,James Harden,False
+XGB-Ranker (51),2018,James Harden,James Harden,True
+XGB-Ranker (51),2019,Giannis Antetokounmpo,Giannis Antetokounmpo,True
+XGB-Ranker (51),2020,Giannis Antetokounmpo,Giannis Antetokounmpo,True
+XGB-Ranker (51),2021,Nikola JokiÄ,Nikola JokiÄ,True
+XGB-Ranker (51),2022,Nikola JokiÄ,Giannis Antetokounmpo,False
+XGB-Ranker (51),2023,Joel Embiid,Nikola JokiÄ,False
+XGB-Ranker (51),2024,Nikola JokiÄ,Nikola JokiÄ,True
+XGB-Ranker (51),2025,Shai Gilgeous-Alexander,Shai Gilgeous-Alexander,True
+XGB-Binary (51),1980,Kareem Abdul-Jabbar,Julius Erving,False
+XGB-Binary (51),1981,Julius Erving,Julius Erving,True
+XGB-Binary (51),1982,Moses Malone,Larry Bird,False
+XGB-Binary (51),1983,Moses Malone,Moses Malone,True
+XGB-Binary (51),1984,Larry Bird,Larry Bird,True
+XGB-Binary (51),1985,Larry Bird,Larry Bird,True
+XGB-Binary (51),1986,Larry Bird,Larry Bird,True
+XGB-Binary (51),1987,Magic Johnson,Magic Johnson,True
+XGB-Binary (51),1988,Michael Jordan,Magic Johnson,False
+XGB-Binary (51),1989,Magic Johnson,Michael Jordan,False
+XGB-Binary (51),1990,Magic Johnson,Magic Johnson,True
+XGB-Binary (51),1991,Michael Jordan,Michael Jordan,True
+XGB-Binary (51),1992,Michael Jordan,Michael Jordan,True
+XGB-Binary (51),1993,Charles Barkley,Charles Barkley,True
+XGB-Binary (51),1994,Hakeem Olajuwon,David Robinson,False
+XGB-Binary (51),1995,David Robinson,David Robinson,True
+XGB-Binary (51),1996,Michael Jordan,Michael Jordan,True
+XGB-Binary (51),1997,Karl Malone,Michael Jordan,False
+XGB-Binary (51),1998,Michael Jordan,Karl Malone,False
+XGB-Binary (51),1999,Tim Duncan,Darrell Armstrong,False
+XGB-Binary (51),2000,Shaquille O'Neal,Shaquille O'Neal,True
+XGB-Binary (51),2001,Allen Iverson,Tim Duncan,False
+XGB-Binary (51),2002,Tim Duncan,Tim Duncan,True
+XGB-Binary (51),2003,Tim Duncan,Tim Duncan,True
+XGB-Binary (51),2004,Kevin Garnett,Kevin Garnett,True
+XGB-Binary (51),2005,Steve Nash,Amar'e Stoudemire,False
+XGB-Binary (51),2006,Steve Nash,LeBron James,False
+XGB-Binary (51),2007,Dirk Nowitzki,Steve Nash,False
+XGB-Binary (51),2008,Kobe Bryant,LeBron James,False
+XGB-Binary (51),2009,LeBron James,LeBron James,True
+XGB-Binary (51),2010,LeBron James,LeBron James,True
+XGB-Binary (51),2011,Derrick Rose,Derrick Rose,True
+XGB-Binary (51),2012,LeBron James,LeBron James,True
+XGB-Binary (51),2013,LeBron James,Kevin Durant,False
+XGB-Binary (51),2014,Kevin Durant,Kevin Durant,True
+XGB-Binary (51),2015,Stephen Curry,Stephen Curry,True
+XGB-Binary (51),2016,Stephen Curry,Stephen Curry,True
+XGB-Binary (51),2017,Russell Westbrook,Stephen Curry,False
+XGB-Binary (51),2018,James Harden,James Harden,True
+XGB-Binary (51),2019,Giannis Antetokounmpo,Giannis Antetokounmpo,True
+XGB-Binary (51),2020,Giannis Antetokounmpo,Giannis Antetokounmpo,True
+XGB-Binary (51),2021,Nikola JokiÄ,Nikola JokiÄ,True
+XGB-Binary (51),2022,Nikola JokiÄ,Nikola JokiÄ,True
+XGB-Binary (51),2023,Joel Embiid,Nikola JokiÄ,False
+XGB-Binary (51),2024,Nikola JokiÄ,Nikola JokiÄ,True
+XGB-Binary (51),2025,Shai Gilgeous-Alexander,Shai Gilgeous-Alexander,True
+XGB-Top3 (51),1980,Kareem Abdul-Jabbar,Kareem Abdul-Jabbar,True
+XGB-Top3 (51),1981,Julius Erving,Julius Erving,True
+XGB-Top3 (51),1982,Moses Malone,Larry Bird,False
+XGB-Top3 (51),1983,Moses Malone,Larry Bird,False
+XGB-Top3 (51),1984,Larry Bird,Larry Bird,True
+XGB-Top3 (51),1985,Larry Bird,Larry Bird,True
+XGB-Top3 (51),1986,Larry Bird,Larry Bird,True
+XGB-Top3 (51),1987,Magic Johnson,Larry Bird,False
+XGB-Top3 (51),1988,Michael Jordan,Larry Bird,False
+XGB-Top3 (51),1989,Magic Johnson,Magic Johnson,True
+XGB-Top3 (51),1990,Magic Johnson,Magic Johnson,True
+XGB-Top3 (51),1991,Michael Jordan,Michael Jordan,True
+XGB-Top3 (51),1992,Michael Jordan,Michael Jordan,True
+XGB-Top3 (51),1993,Charles Barkley,Michael Jordan,False
+XGB-Top3 (51),1994,Hakeem Olajuwon,David Robinson,False
+XGB-Top3 (51),1995,David Robinson,David Robinson,True
+XGB-Top3 (51),1996,Michael Jordan,Michael Jordan,True
+XGB-Top3 (51),1997,Karl Malone,Michael Jordan,False
+XGB-Top3 (51),1998,Michael Jordan,Shaquille O'Neal,False
+XGB-Top3 (51),1999,Tim Duncan,Darrell Armstrong,False
+XGB-Top3 (51),2000,Shaquille O'Neal,Shaquille O'Neal,True
+XGB-Top3 (51),2001,Allen Iverson,Tim Duncan,False
+XGB-Top3 (51),2002,Tim Duncan,Tim Duncan,True
+XGB-Top3 (51),2003,Tim Duncan,Tim Duncan,True
+XGB-Top3 (51),2004,Kevin Garnett,Kevin Garnett,True
+XGB-Top3 (51),2005,Steve Nash,Tim Duncan,False
+XGB-Top3 (51),2006,Steve Nash,Kobe Bryant,False
+XGB-Top3 (51),2007,Dirk Nowitzki,Dirk Nowitzki,True
+XGB-Top3 (51),2008,Kobe Bryant,LeBron James,False
+XGB-Top3 (51),2009,LeBron James,LeBron James,True
+XGB-Top3 (51),2010,LeBron James,LeBron James,True
+XGB-Top3 (51),2011,Derrick Rose,LeBron James,False
+XGB-Top3 (51),2012,LeBron James,LeBron James,True
+XGB-Top3 (51),2013,LeBron James,LeBron James,True
+XGB-Top3 (51),2014,Kevin Durant,Kevin Durant,True
+XGB-Top3 (51),2015,Stephen Curry,James Harden,False
+XGB-Top3 (51),2016,Stephen Curry,Stephen Curry,True
+XGB-Top3 (51),2017,Russell Westbrook,LeBron James,False
+XGB-Top3 (51),2018,James Harden,James Harden,True
+XGB-Top3 (51),2019,Giannis Antetokounmpo,Giannis Antetokounmpo,True
+XGB-Top3 (51),2020,Giannis Antetokounmpo,Giannis Antetokounmpo,True
+XGB-Top3 (51),2021,Nikola JokiÄ,Nikola JokiÄ,True
+XGB-Top3 (51),2022,Nikola JokiÄ,Joel Embiid,False
+XGB-Top3 (51),2023,Joel Embiid,Joel Embiid,True
+XGB-Top3 (51),2024,Nikola JokiÄ,Nikola JokiÄ,True
+XGB-Top3 (51),2025,Shai Gilgeous-Alexander,Nikola JokiÄ,False
+Ensemble-Vote,1980,Kareem Abdul-Jabbar,Kareem Abdul-Jabbar,True
+Ensemble-Vote,1981,Julius Erving,Julius Erving,True
+Ensemble-Vote,1982,Moses Malone,Larry Bird,False
+Ensemble-Vote,1983,Moses Malone,Moses Malone,True
+Ensemble-Vote,1984,Larry Bird,Larry Bird,True
+Ensemble-Vote,1985,Larry Bird,Larry Bird,True
+Ensemble-Vote,1986,Larry Bird,Larry Bird,True
+Ensemble-Vote,1987,Magic Johnson,Magic Johnson,True
+Ensemble-Vote,1988,Michael Jordan,Larry Bird,False
+Ensemble-Vote,1989,Magic Johnson,Michael Jordan,False
+Ensemble-Vote,1990,Magic Johnson,Magic Johnson,True
+Ensemble-Vote,1991,Michael Jordan,Michael Jordan,True
+Ensemble-Vote,1992,Michael Jordan,Michael Jordan,True
+Ensemble-Vote,1993,Charles Barkley,Michael Jordan,False
+Ensemble-Vote,1994,Hakeem Olajuwon,David Robinson,False
+Ensemble-Vote,1995,David Robinson,David Robinson,True
+Ensemble-Vote,1996,Michael Jordan,Michael Jordan,True
+Ensemble-Vote,1997,Karl Malone,Karl Malone,True
+Ensemble-Vote,1998,Michael Jordan,Karl Malone,False
+Ensemble-Vote,1999,Tim Duncan,Tim Duncan,True
+Ensemble-Vote,2000,Shaquille O'Neal,Shaquille O'Neal,True
+Ensemble-Vote,2001,Allen Iverson,Shaquille O'Neal,False
+Ensemble-Vote,2002,Tim Duncan,Tim Duncan,True
+Ensemble-Vote,2003,Tim Duncan,Tim Duncan,True
+Ensemble-Vote,2004,Kevin Garnett,Kevin Garnett,True
+Ensemble-Vote,2005,Steve Nash,Amar'e Stoudemire,False
+Ensemble-Vote,2006,Steve Nash,LeBron James,False
+Ensemble-Vote,2007,Dirk Nowitzki,Dirk Nowitzki,True
+Ensemble-Vote,2008,Kobe Bryant,LeBron James,False
+Ensemble-Vote,2009,LeBron James,LeBron James,True
+Ensemble-Vote,2010,LeBron James,LeBron James,True
+Ensemble-Vote,2011,Derrick Rose,LeBron James,False
+Ensemble-Vote,2012,LeBron James,LeBron James,True
+Ensemble-Vote,2013,LeBron James,LeBron James,True
+Ensemble-Vote,2014,Kevin Durant,Kevin Durant,True
+Ensemble-Vote,2015,Stephen Curry,Stephen Curry,True
+Ensemble-Vote,2016,Stephen Curry,Stephen Curry,True
+Ensemble-Vote,2017,Russell Westbrook,Russell Westbrook,True
+Ensemble-Vote,2018,James Harden,James Harden,True
+Ensemble-Vote,2019,Giannis Antetokounmpo,Giannis Antetokounmpo,True
+Ensemble-Vote,2020,Giannis Antetokounmpo,Giannis Antetokounmpo,True
+Ensemble-Vote,2021,Nikola JokiÄ,Nikola JokiÄ,True
+Ensemble-Vote,2022,Nikola JokiÄ,Joel Embiid,False
+Ensemble-Vote,2023,Joel Embiid,Nikola JokiÄ,False
+Ensemble-Vote,2024,Nikola JokiÄ,Nikola JokiÄ,True
+Ensemble-Vote,2025,Shai Gilgeous-Alexander,Shai Gilgeous-Alexander,True
+Ensemble-AvgRank,1980,Kareem Abdul-Jabbar,Kareem Abdul-Jabbar,True
+Ensemble-AvgRank,1981,Julius Erving,Julius Erving,True
+Ensemble-AvgRank,1982,Moses Malone,Larry Bird,False
+Ensemble-AvgRank,1983,Moses Malone,Moses Malone,True
+Ensemble-AvgRank,1984,Larry Bird,Larry Bird,True
+Ensemble-AvgRank,1985,Larry Bird,Larry Bird,True
+Ensemble-AvgRank,1986,Larry Bird,Larry Bird,True
+Ensemble-AvgRank,1987,Magic Johnson,Magic Johnson,True
+Ensemble-AvgRank,1988,Michael Jordan,Larry Bird,False
+Ensemble-AvgRank,1989,Magic Johnson,Michael Jordan,False
+Ensemble-AvgRank,1990,Magic Johnson,Magic Johnson,True
+Ensemble-AvgRank,1991,Michael Jordan,Michael Jordan,True
+Ensemble-AvgRank,1992,Michael Jordan,Michael Jordan,True
+Ensemble-AvgRank,1993,Charles Barkley,Michael Jordan,False
+Ensemble-AvgRank,1994,Hakeem Olajuwon,David Robinson,False
+Ensemble-AvgRank,1995,David Robinson,David Robinson,True
+Ensemble-AvgRank,1996,Michael Jordan,Michael Jordan,True
+Ensemble-AvgRank,1997,Karl Malone,Karl Malone,True
+Ensemble-AvgRank,1998,Michael Jordan,Karl Malone,False
+Ensemble-AvgRank,1999,Tim Duncan,Tim Duncan,True
+Ensemble-AvgRank,2000,Shaquille O'Neal,Shaquille O'Neal,True
+Ensemble-AvgRank,2001,Allen Iverson,Shaquille O'Neal,False
+Ensemble-AvgRank,2002,Tim Duncan,Tim Duncan,True
+Ensemble-AvgRank,2003,Tim Duncan,Tim Duncan,True
+Ensemble-AvgRank,2004,Kevin Garnett,Kevin Garnett,True
+Ensemble-AvgRank,2005,Steve Nash,Amar'e Stoudemire,False
+Ensemble-AvgRank,2006,Steve Nash,Kobe Bryant,False
+Ensemble-AvgRank,2007,Dirk Nowitzki,Dirk Nowitzki,True
+Ensemble-AvgRank,2008,Kobe Bryant,LeBron James,False
+Ensemble-AvgRank,2009,LeBron James,LeBron James,True
+Ensemble-AvgRank,2010,LeBron James,LeBron James,True
+Ensemble-AvgRank,2011,Derrick Rose,LeBron James,False
+Ensemble-AvgRank,2012,LeBron James,LeBron James,True
+Ensemble-AvgRank,2013,LeBron James,LeBron James,True
+Ensemble-AvgRank,2014,Kevin Durant,Kevin Durant,True
+Ensemble-AvgRank,2015,Stephen Curry,Stephen Curry,True
+Ensemble-AvgRank,2016,Stephen Curry,Stephen Curry,True
+Ensemble-AvgRank,2017,Russell Westbrook,James Harden,False
+Ensemble-AvgRank,2018,James Harden,James Harden,True
+Ensemble-AvgRank,2019,Giannis Antetokounmpo,Giannis Antetokounmpo,True
+Ensemble-AvgRank,2020,Giannis Antetokounmpo,Giannis Antetokounmpo,True
+Ensemble-AvgRank,2021,Nikola JokiÄ,Nikola JokiÄ,True
+Ensemble-AvgRank,2022,Nikola JokiÄ,Joel Embiid,False
+Ensemble-AvgRank,2023,Joel Embiid,Nikola JokiÄ,False
+Ensemble-AvgRank,2024,Nikola JokiÄ,Nikola JokiÄ,True
+Ensemble-AvgRank,2025,Shai Gilgeous-Alexander,Shai Gilgeous-Alexander,True
+XGB+PostProcess (51),1980,Kareem Abdul-Jabbar,Kareem Abdul-Jabbar,True
+XGB+PostProcess (51),1981,Julius Erving,Julius Erving,True
+XGB+PostProcess (51),1982,Moses Malone,Larry Bird,False
+XGB+PostProcess (51),1983,Moses Malone,Moses Malone,True
+XGB+PostProcess (51),1984,Larry Bird,Larry Bird,True
+XGB+PostProcess (51),1985,Larry Bird,Larry Bird,True
+XGB+PostProcess (51),1986,Larry Bird,Larry Bird,True
+XGB+PostProcess (51),1987,Magic Johnson,Magic Johnson,True
+XGB+PostProcess (51),1988,Michael Jordan,Michael Jordan,True
+XGB+PostProcess (51),1989,Magic Johnson,Magic Johnson,True
+XGB+PostProcess (51),1990,Magic Johnson,Magic Johnson,True
+XGB+PostProcess (51),1991,Michael Jordan,Michael Jordan,True
+XGB+PostProcess (51),1992,Michael Jordan,Michael Jordan,True
+XGB+PostProcess (51),1993,Charles Barkley,Michael Jordan,False
+XGB+PostProcess (51),1994,Hakeem Olajuwon,David Robinson,False
+XGB+PostProcess (51),1995,David Robinson,David Robinson,True
+XGB+PostProcess (51),1996,Michael Jordan,Michael Jordan,True
+XGB+PostProcess (51),1997,Karl Malone,Karl Malone,True
+XGB+PostProcess (51),1998,Michael Jordan,Karl Malone,False
+XGB+PostProcess (51),1999,Tim Duncan,Tim Duncan,True
+XGB+PostProcess (51),2000,Shaquille O'Neal,Shaquille O'Neal,True
+XGB+PostProcess (51),2001,Allen Iverson,Shaquille O'Neal,False
+XGB+PostProcess (51),2002,Tim Duncan,Tim Duncan,True
+XGB+PostProcess (51),2003,Tim Duncan,Tim Duncan,True
+XGB+PostProcess (51),2004,Kevin Garnett,Kevin Garnett,True
+XGB+PostProcess (51),2005,Steve Nash,Amar'e Stoudemire,False
+XGB+PostProcess (51),2006,Steve Nash,Dirk Nowitzki,False
+XGB+PostProcess (51),2007,Dirk Nowitzki,Dirk Nowitzki,True
+XGB+PostProcess (51),2008,Kobe Bryant,LeBron James,False
+XGB+PostProcess (51),2009,LeBron James,LeBron James,True
+XGB+PostProcess (51),2010,LeBron James,LeBron James,True
+XGB+PostProcess (51),2011,Derrick Rose,LeBron James,False
+XGB+PostProcess (51),2012,LeBron James,LeBron James,True
+XGB+PostProcess (51),2013,LeBron James,LeBron James,True
+XGB+PostProcess (51),2014,Kevin Durant,Kevin Durant,True
+XGB+PostProcess (51),2015,Stephen Curry,Stephen Curry,True
+XGB+PostProcess (51),2016,Stephen Curry,Stephen Curry,True
+XGB+PostProcess (51),2017,Russell Westbrook,James Harden,False
+XGB+PostProcess (51),2018,James Harden,James Harden,True
+XGB+PostProcess (51),2019,Giannis Antetokounmpo,Giannis Antetokounmpo,True
+XGB+PostProcess (51),2020,Giannis Antetokounmpo,Giannis Antetokounmpo,True
+XGB+PostProcess (51),2021,Nikola JokiÄ,Nikola JokiÄ,True
+XGB+PostProcess (51),2022,Nikola JokiÄ,Joel Embiid,False
+XGB+PostProcess (51),2023,Joel Embiid,Nikola JokiÄ,False
+XGB+PostProcess (51),2024,Nikola JokiÄ,Nikola JokiÄ,True
+XGB+PostProcess (51),2025,Shai Gilgeous-Alexander,Shai Gilgeous-Alexander,True
