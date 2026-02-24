@@ -227,6 +227,36 @@ tr.detail-row td {
   margin-left: 4px;
 }
 
+/* Percentage bars for within-year share */
+.pct-bar {
+  display: inline-block;
+  width: 80px;
+  height: 6px;
+  background: var(--border);
+  border-radius: 3px;
+  vertical-align: middle;
+  margin-left: 6px;
+}
+
+.pct-fill {
+  display: block;
+  height: 100%;
+  background: var(--accent-light);
+  border-radius: 3px;
+  transition: width 0.3s;
+}
+
+/* Tab description */
+.tab-description {
+  color: var(--text-dim);
+  font-size: 0.85rem;
+  margin-bottom: 16px;
+  line-height: 1.6;
+}
+
+/* All-Time tab */
+tr.row-alltime-winner { background: rgba(240, 177, 50, 0.1); }
+
 /* Deserving tab */
 .deserving-section {
   margin-bottom: 40px;

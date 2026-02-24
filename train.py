@@ -405,20 +405,26 @@ def export_website_data(all_models, best_name, best_year_preds, df):
         pred_top5 = tdf.nlargest(5, "pred_share")
         year_full = df[df["Year"] == year]
 
-        def player_info(row, share_col):
+        # Normalized predicted shares within this year (top 5 sum to 1)
+        pred_top5_total = pred_top5["pred_share"].sum()
+
+        def player_info(row, share_col, norm_total=None):
             p = row["Player"]
             prow = year_full[year_full["Player"] == p]
             pts = float(prow["PTS"].values[0]) if len(prow) > 0 else 0
             tm = str(prow["Tm"].values[0]) if len(prow) > 0 else row.get("Tm", "")
-            return {
+            info = {
                 "player": p,
                 "team": tm,
                 "share": round(float(row[share_col]), 4),
                 "pts": pts,
             }
+            if norm_total and norm_total > 0:
+                info["norm_share"] = round(float(row[share_col]) / norm_total, 4)
+            return info
 
         actual_list = [player_info(row, TARGET) for _, row in actual_top5.iterrows()]
-        pred_list = [player_info(row, "pred_share") for _, row in pred_top5.iterrows()]
+        pred_list = [player_info(row, "pred_share", pred_top5_total) for _, row in pred_top5.iterrows()]
 
         match = "correct" if r["top1_correct"] else ("top3" if r["top3_correct"] else "miss")
         years_data.append({
@@ -454,7 +460,7 @@ def export_website_data(all_models, best_name, best_year_preds, df):
                 "pts": pts,
                 "actual_share": round(float(row[TARGET]), 4),
                 "predicted_share": round(float(row["pred_share"]), 4),
-                "was_mvp": row["Player"] == actual_mvp,
+                "was_mvp": bool(row["Player"] == actual_mvp),
                 "actual_mvp": actual_mvp,
             })
 
@@ -469,7 +475,7 @@ def export_website_data(all_models, best_name, best_year_preds, df):
 
     path = os.path.join("docs", "data.json")
     with open(path, "w") as f:
-        json.dump(data, f, indent=2)
+        json.dump(data, f, indent=2, default=lambda o: float(o) if hasattr(o, 'item') else o)
     log(f"\nWebsite data exported to {path}")
 
 

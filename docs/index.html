@@ -17,6 +17,7 @@
     <div class="tabs">
       <button class="tab-btn active" data-tab="years">Year-by-Year Results</button>
       <button class="tab-btn" data-tab="deserving">Most / Least Deserving</button>
+      <button class="tab-btn" data-tab="alltime">All-Time Great Seasons</button>
     </div>
 
     <!-- Tab 1: Year-by-Year -->
@@ -98,11 +99,45 @@
         </table>
       </div>
     </div>
+
+    <!-- Tab 3: All-Time Great Seasons -->
+    <div id="tab-alltime" class="tab-content" style="display:none">
+      <p class="tab-description">Player-seasons ranked by predicted vote share across all years. A high predicted share means the model sees that season as an all-time great MVP case regardless of who else was playing that year.</p>
+      <div class="filter-bar">
+        <label for="alltime-count">Show top:</label>
+        <select id="alltime-count">
+          <option value="25">25</option>
+          <option value="50" selected>50</option>
+          <option value="100">100</option>
+          <option value="200">200</option>
+        </select>
+        <label for="alltime-winner-filter">Filter:</label>
+        <select id="alltime-winner-filter">
+          <option value="all">All players</option>
+          <option value="winners">Winners only</option>
+          <option value="nonwinners">Non-winners only</option>
+        </select>
+      </div>
+      <table id="alltime-table">
+        <thead>
+          <tr>
+            <th>Rank</th>
+            <th class="sortable" data-col="player">Player</th>
+            <th class="sortable" data-col="year">Year</th>
+            <th class="sortable" data-col="team">Team</th>
+            <th class="sortable" data-col="predicted_share">Predicted Share</th>
+            <th class="sortable" data-col="actual_share">Actual Share</th>
+            <th>Won MVP?</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
   </div>
 
   <footer>
     <p>Built with XGBoost + leave-one-year-out cross-validation &middot;
-      <a href="https://github.com/mpgra/nba-mvp">Source on GitHub</a></p>
+      <a href="https://github.com/mpg000f/nba-mvp">Source on GitHub</a></p>
   </footer>
 
 <script>
@@ -116,6 +151,7 @@ async function init() {
   renderYears();
   renderModels();
   renderDeserving();
+  renderAllTime();
   setupTabs();
   setupSort();
 }
@@ -143,6 +179,8 @@ function populateFilters() {
   fromSel.addEventListener("change", renderYears);
   toSel.addEventListener("change", renderYears);
   document.getElementById("match-filter").addEventListener("change", renderYears);
+  document.getElementById("alltime-count").addEventListener("change", renderAllTime);
+  document.getElementById("alltime-winner-filter").addEventListener("change", renderAllTime);
 }
 
 function matchIcon(m) {
@@ -174,13 +212,17 @@ function renderYears() {
   });
 }
 
+function pctBar(normShare) {
+  const pct = Math.round(normShare * 100);
+  return `<span class="pct-bar"><span class="pct-fill" style="width:${pct}%"></span></span>`;
+}
+
 function toggleDetail(tr, y) {
   const next = tr.nextElementSibling;
   if (next && next.classList.contains("detail-row")) {
     next.remove();
     return;
   }
-  // Remove any other open detail
   document.querySelectorAll(".detail-row").forEach(r => r.remove());
 
   const detail = document.createElement("tr");
@@ -188,18 +230,25 @@ function toggleDetail(tr, y) {
   const td = document.createElement("td");
   td.colSpan = 4;
 
-  const makeList = (items, shareKey) =>
+  const makeActualList = (items) =>
     items.map(p => `<li>${p.player} <span class="team">${p.team}</span> <span class="share">(${p.share.toFixed(3)})</span></li>`).join("");
+
+  const makePredList = (items) =>
+    items.map(p => {
+      const ns = p.norm_share ? ` — ${(p.norm_share * 100).toFixed(1)}% of field` : "";
+      const bar = p.norm_share ? pctBar(p.norm_share) : "";
+      return `<li>${p.player} <span class="team">${p.team}</span> <span class="share">(${p.share.toFixed(3)}${ns})</span>${bar}</li>`;
+    }).join("");
 
   td.innerHTML = `
     <div class="detail-content">
       <div class="detail-panel">
         <h4>Actual Top 5 (by vote share)</h4>
-        <ol>${makeList(y.actual_top5)}</ol>
+        <ol>${makeActualList(y.actual_top5)}</ol>
       </div>
       <div class="detail-panel">
-        <h4>Predicted Top 5</h4>
-        <ol>${makeList(y.predicted_top5)}</ol>
+        <h4>Predicted Top 5 (within-year share)</h4>
+        <ol>${makePredList(y.predicted_top5)}</ol>
       </div>
     </div>
   `;
@@ -227,7 +276,6 @@ function renderModels() {
 function renderDeserving() {
   const d = DATA.deserving;
 
-  // Snubs: non-winners, sorted by predicted share desc
   const snubs = d.filter(p => !p.was_mvp)
     .sort((a, b) => b.predicted_share - a.predicted_share)
     .slice(0, 50);
@@ -246,11 +294,9 @@ function renderDeserving() {
     snubsTbody.appendChild(tr);
   });
 
-  // Least deserving winners: winners sorted by predicted share asc
   const winners = d.filter(p => p.was_mvp)
     .sort((a, b) => a.predicted_share - b.predicted_share);
 
-  // For each winner, find who the model predicted
   const yearPredMap = {};
   DATA.years.forEach(y => { yearPredMap[y.year] = y.predicted_mvp; });
 
@@ -267,10 +313,33 @@ function renderDeserving() {
     `;
     leastTbody.appendChild(tr);
   });
+}
 
-  // Store data on tables for sorting
-  document.getElementById("snubs-table")._data = snubs;
-  document.getElementById("least-table")._data = winners;
+function renderAllTime() {
+  const count = +document.getElementById("alltime-count").value;
+  const filter = document.getElementById("alltime-winner-filter").value;
+  const tbody = document.querySelector("#alltime-table tbody");
+  tbody.innerHTML = "";
+
+  let pool = DATA.deserving.slice();
+  if (filter === "winners") pool = pool.filter(p => p.was_mvp);
+  else if (filter === "nonwinners") pool = pool.filter(p => !p.was_mvp);
+
+  pool.sort((a, b) => b.predicted_share - a.predicted_share);
+  pool.slice(0, count).forEach((p, i) => {
+    const tr = document.createElement("tr");
+    if (p.was_mvp) tr.className = "row-alltime-winner";
+    tr.innerHTML = `
+      <td>${i + 1}</td>
+      <td>${p.player}</td>
+      <td>${p.year}</td>
+      <td>${p.team}</td>
+      <td>${p.predicted_share.toFixed(4)}</td>
+      <td>${p.actual_share.toFixed(4)}</td>
+      <td>${p.was_mvp ? '<span class="match-icon match-correct">\u2713</span>' : ""}</td>
+    `;
+    tbody.appendChild(tr);
+  });
 }
 
 function setupTabs() {
@@ -292,7 +361,6 @@ function setupSort() {
       const col = th.dataset.col;
       const isNum = ["year", "predicted_share", "actual_share", "pts"].includes(col);
 
-      // Toggle direction
       const wasAsc = th.classList.contains("sort-asc");
       table.querySelectorAll("th").forEach(h => { h.classList.remove("sort-asc", "sort-desc"); });
       const dir = wasAsc ? "desc" : "asc";
