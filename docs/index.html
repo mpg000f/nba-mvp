@@ -63,7 +63,6 @@
         <select id="scatter-topn">
           <option value="5" selected>Top 5</option>
           <option value="10">Top 10</option>
-          <option value="0">All</option>
         </select>
         <label class="toggle-label"><input type="checkbox" id="scatter-mvps-only"> MVPs only</label>
       </div>
@@ -453,6 +452,29 @@ function setupScatter() {
   });
 }
 
+function rescalePercentiles(pool) {
+  // Recompute percentile ranks within this filtered group
+  const winVals = pool.map(d => d.winning_pctile);
+  const indVals = pool.map(d => d.individual_pctile);
+  winVals.sort((a, b) => a - b);
+  indVals.sort((a, b) => a - b);
+
+  function pctRank(sorted, val) {
+    let below = 0;
+    for (let i = 0; i < sorted.length; i++) {
+      if (sorted[i] < val) below++;
+      else break;
+    }
+    return sorted.length > 1 ? (below / (sorted.length - 1)) * 100 : 50;
+  }
+
+  return pool.map(d => ({
+    ...d,
+    _wx: pctRank(winVals, d.winning_pctile),
+    _iy: pctRank(indVals, d.individual_pctile),
+  }));
+}
+
 function drawScatter() {
   const canvas = document.getElementById("scatter-canvas");
   const ctx = canvas.getContext("2d");
@@ -469,14 +491,14 @@ function drawScatter() {
   const topN = +document.getElementById("scatter-topn").value;
   const mvpOnly = document.getElementById("scatter-mvps-only").checked;
 
-  // Filter data
+  // Filter data — year range first
   let pool = DATA.deserving.filter(d =>
     d.year >= from && d.year <= to &&
     d.winning_pctile != null && d.individual_pctile != null
   );
 
+  // Keep only top N by predicted_share per year
   if (topN > 0) {
-    // Keep only top N by predicted_share per year
     const byYear = {};
     pool.forEach(d => { (byYear[d.year] = byYear[d.year] || []).push(d); });
     pool = [];
@@ -487,6 +509,9 @@ function drawScatter() {
   }
 
   if (mvpOnly) pool = pool.filter(d => d.was_mvp);
+
+  // Rescale to 0-100 within the filtered group
+  pool = rescalePercentiles(pool);
 
   // Margins
   const ml = 60, mr = 20, mt = 20, mb = 50;
@@ -531,8 +556,8 @@ function drawScatter() {
 
   scatterDots = [];
   pool.forEach(d => {
-    const cx = ml + (d.winning_pctile / 100) * pw;
-    const cy = mt + (1 - d.individual_pctile / 100) * ph;
+    const cx = ml + (d._wx / 100) * pw;
+    const cy = mt + (1 - d._iy / 100) * ph;
     const r = 3 + (d.predicted_share / maxShare) * 8;
 
     ctx.beginPath();
@@ -563,6 +588,12 @@ function drawScatter() {
   ctx.beginPath(); ctx.arc(ml + 10, mt + 36, 5, 0, Math.PI * 2); ctx.fill();
   ctx.fillStyle = "#e6edf3";
   ctx.fillText("Non-winner", ml + 20, mt + 40);
+
+  // Count label
+  ctx.fillStyle = "#8b949e";
+  ctx.font = "11px -apple-system, sans-serif";
+  ctx.textAlign = "right";
+  ctx.fillText(`${pool.length} players`, W - mr, mt + 14);
 }
 
 init();

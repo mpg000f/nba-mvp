@@ -514,8 +514,8 @@ def export_website_data(all_models, best_name, best_year_preds, df):
     }
 
     path = os.path.join("docs", "data.json")
-    with open(path, "w") as f:
-        json.dump(data, f, indent=2, default=lambda o: float(o) if hasattr(o, 'item') else o)
+    with open(path, "w", encoding="utf-8") as f:
+        json.dump(data, f, indent=2, ensure_ascii=False, default=lambda o: float(o) if hasattr(o, 'item') else o)
     log(f"\nWebsite data exported to {path}")
 
 
