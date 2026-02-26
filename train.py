@@ -403,6 +403,8 @@ def _player_stats(prow):
     return {
         "trb": _safe_float(prow, "TRB"),
         "ast": _safe_float(prow, "AST"),
+        "stl": _safe_float(prow, "STL"),
+        "blk": _safe_float(prow, "BLK"),
         "fg_pct": _safe_float(prow, "FG%"),
         "three_pct": _safe_float(prow, "3P%"),
         "bpm": _safe_float(prow, "BPM"),
@@ -499,7 +501,12 @@ def export_website_data(all_models, best_name, best_year_preds, df):
     per_vals = [d["per"] for d in deserving]
     pts_vals = [d["pts"] for d in deserving]
     vorp_vals = [d["vorp"] for d in deserving]
-    indiv_raw = _z(bpm_vals) + _z(per_vals) + _z(pts_vals) + _z(vorp_vals)
+    trb_vals = [d["trb"] for d in deserving]
+    ast_vals = [d["ast"] for d in deserving]
+    stl_vals = [d["stl"] for d in deserving]
+    blk_vals = [d["blk"] for d in deserving]
+    indiv_raw = (_z(bpm_vals) + _z(per_vals) + _z(pts_vals) + _z(vorp_vals)
+                 + _z(trb_vals) + _z(ast_vals) + _z(stl_vals) + _z(blk_vals))
 
     for i, d in enumerate(deserving):
         d["winning_pctile"] = round(float(percentileofscore(winning_raw, winning_raw[i], kind="rank")), 1)

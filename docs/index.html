@@ -53,7 +53,7 @@
 
     <!-- Tab 2: Scatter Plot -->
     <div id="tab-scatter" class="tab-content" style="display:none">
-      <p class="tab-description">Every MVP candidate plotted by two composite dimensions. <strong>Winning Impact</strong> (x-axis) captures team success — win shares, win percentage, and conference seed. <strong>Individual Dominance</strong> (y-axis) captures personal performance — BPM, PER, points, and VORP. Both axes are percentile ranks across all ~6,000 candidates. Dot size reflects predicted vote share.</p>
+      <p class="tab-description">Every MVP candidate plotted by two composite dimensions. <strong>Winning Impact</strong> (x-axis) captures team success — win shares, win percentage, and conference seed. <strong>Individual Dominance</strong> (y-axis) captures personal performance — PTS, TRB, AST, STL, BLK, BPM, PER, and VORP. Both axes are percentile ranks across all ~6,000 candidates. Dot size reflects predicted vote share.</p>
       <div class="filter-bar">
         <label for="scatter-year-from">From:</label>
         <select id="scatter-year-from"></select>
@@ -565,7 +565,7 @@ function drawScatter() {
   ctx.save();
   ctx.translate(14, mt + ph / 2);
   ctx.rotate(-Math.PI / 2);
-  ctx.fillText("Individual Dominance (BPM + PER + PTS + VORP) — Percentile", 0, 0);
+  ctx.fillText("Individual Dominance (PTS + TRB + AST + STL + BLK + BPM + PER + VORP)", 0, 0);
   ctx.restore();
 
   // Sort so MVPs draw on top
