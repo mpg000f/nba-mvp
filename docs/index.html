@@ -415,14 +415,15 @@ function setupScatter() {
     const sx = mx / rect.width * 800;
     const sy = my / rect.height * 600;
 
+    // Find the top-most (last-drawn) dot under the cursor.
+    // scatterDots is in draw order: non-MVPs first, MVPs on top.
     let hit = null;
-    let minDist = Infinity;
-    for (const dot of scatterDots) {
+    for (let i = scatterDots.length - 1; i >= 0; i--) {
+      const dot = scatterDots[i];
       const dx = dot.cx - sx, dy = dot.cy - sy;
-      const dist = dx * dx + dy * dy;
-      if (dist < dot.r * dot.r + 100 && dist < minDist) {
-        minDist = dist;
+      if (dx * dx + dy * dy < dot.r * dot.r + 100) {
         hit = dot;
+        break;
       }
     }
 
