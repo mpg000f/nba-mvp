@@ -490,30 +490,52 @@ def export_website_data(all_models, best_name, best_year_preds, df):
             entry.update(_player_stats(prow))
             deserving.append(entry)
 
+    # --- Prorate cumulative stats for shortened seasons ---
+    # Determine season length per year from max(TeamWins / WinPct)
+    season_games = {}
+    for year, tdf in best_year_preds.items():
+        year_full = df[df["Year"] == year]
+        max_g = int(year_full["G"].max())
+        # Use TeamWins/WinPct for a more accurate season length
+        valid = year_full[year_full["WinPct"] > 0]
+        if len(valid) > 0:
+            implied = (valid["TeamWins"] / valid["WinPct"]).median()
+            season_games[int(year)] = round(float(implied))
+        else:
+            season_games[int(year)] = max_g
+    log(f"Shortened seasons detected: "
+        + ", ".join(f"{y}={g}G" for y, g in sorted(season_games.items()) if g < 82))
+
+    def _prorate(val, year):
+        """Scale a cumulative stat to 82-game equivalent."""
+        sg = season_games.get(year, 82)
+        return val * 82.0 / sg if sg < 82 else val
+
     # --- Scatter plot axes: percentile ranks across all candidates ---
     def _z(arr):
         a = np.array(arr, dtype=float)
         mu, sd = a.mean(), a.std()
         return (a - mu) / sd if sd > 0 else np.zeros_like(a)
 
-    ws_vals = [d["ws"] for d in deserving]
-    ws48_vals = [d["ws48"] for d in deserving]
-    ows_vals = [d["ows"] for d in deserving]
-    obpm_vals = [d["obpm"] for d in deserving]
+    # Prorate cumulative stats (WS, OWS, VORP) for shortened seasons
+    ws_vals = [_prorate(d["ws"], d["year"]) for d in deserving]
+    ws48_vals = [d["ws48"] for d in deserving]  # rate stat, no proration
+    ows_vals = [_prorate(d["ows"], d["year"]) for d in deserving]
+    obpm_vals = [d["obpm"] for d in deserving]  # rate stat
     wp_vals = [d["win_pct"] for d in deserving]
     seed_vals = [1.0 / max(d["conf_seed"], 1) for d in deserving]
     brc_vals = [d["best_record_conf"] for d in deserving]
     winning_raw = (_z(ws_vals) + _z(ws48_vals) + _z(ows_vals) + _z(obpm_vals)
                    + _z(wp_vals) + _z(seed_vals) + _z(brc_vals))
 
-    bpm_vals = [d["bpm"] for d in deserving]
-    per_vals = [d["per"] for d in deserving]
-    pts_vals = [d["pts"] for d in deserving]
-    vorp_vals = [d["vorp"] for d in deserving]
-    trb_vals = [d["trb"] for d in deserving]
-    ast_vals = [d["ast"] for d in deserving]
-    stl_vals = [d["stl"] for d in deserving]
-    blk_vals = [d["blk"] for d in deserving]
+    bpm_vals = [d["bpm"] for d in deserving]  # rate stat
+    per_vals = [d["per"] for d in deserving]   # rate stat
+    pts_vals = [d["pts"] for d in deserving]   # per-game
+    vorp_vals = [_prorate(d["vorp"], d["year"]) for d in deserving]
+    trb_vals = [d["trb"] for d in deserving]   # per-game
+    ast_vals = [d["ast"] for d in deserving]   # per-game
+    stl_vals = [d["stl"] for d in deserving]   # per-game
+    blk_vals = [d["blk"] for d in deserving]   # per-game
     indiv_raw = (_z(bpm_vals) + _z(per_vals) + _z(pts_vals) + _z(vorp_vals)
                  + _z(trb_vals) + _z(ast_vals) + _z(stl_vals) + _z(blk_vals))
 
