@@ -391,9 +391,34 @@ def plot_importance(model, features, path):
 # Website data export
 # ---------------------------------------------------------------------------
 
+def _safe_float(prow, col):
+    """Extract a float from a single-row DataFrame slice, or 0."""
+    if len(prow) == 0 or col not in prow.columns:
+        return 0.0
+    return round(float(prow[col].values[0]), 1)
+
+
+def _player_stats(prow):
+    """Pull stat fields from a matched row in the full-year DataFrame."""
+    return {
+        "trb": _safe_float(prow, "TRB"),
+        "ast": _safe_float(prow, "AST"),
+        "fg_pct": _safe_float(prow, "FG%"),
+        "three_pct": _safe_float(prow, "3P%"),
+        "bpm": _safe_float(prow, "BPM"),
+        "ws": _safe_float(prow, "WS"),
+        "per": _safe_float(prow, "PER"),
+        "vorp": _safe_float(prow, "VORP"),
+        "win_pct": _safe_float(prow, "WinPct"),
+        "conf_seed": _safe_float(prow, "ConfSeed"),
+        "team_wins": _safe_float(prow, "TeamWins"),
+    }
+
+
 def export_website_data(all_models, best_name, best_year_preds, df):
     """Export JSON data for the GitHub Pages site."""
     os.makedirs("docs", exist_ok=True)
+    from scipy.stats import percentileofscore
 
     # Per-year data from the best model
     years_data = []
@@ -419,6 +444,7 @@ def export_website_data(all_models, best_name, best_year_preds, df):
                 "share": round(float(row[share_col]), 4),
                 "pts": pts,
             }
+            info.update(_player_stats(prow))
             if norm_total and norm_total > 0:
                 info["norm_share"] = round(float(row[share_col]) / norm_total, 4)
             return info
@@ -436,14 +462,6 @@ def export_website_data(all_models, best_name, best_year_preds, df):
             "predicted_top5": pred_list,
         })
 
-    # Model comparison table
-    model_table = []
-    for name, res in all_models.items():
-        t1, t3, t5, n = scores(res)
-        model_table.append({
-            "model": name, "top1": t1, "top3": t3, "top5": t5, "n": n,
-        })
-
     # Deserving lists: all players with both actual and predicted share
     deserving = []
     for year, tdf in best_year_preds.items():
@@ -453,7 +471,7 @@ def export_website_data(all_models, best_name, best_year_preds, df):
             prow = year_full[year_full["Player"] == row["Player"]]
             pts = float(prow["PTS"].values[0]) if len(prow) > 0 else 0
             tm = str(prow["Tm"].values[0]) if len(prow) > 0 else str(row.get("Tm", ""))
-            deserving.append({
+            entry = {
                 "player": row["Player"],
                 "year": int(year),
                 "team": tm,
@@ -462,14 +480,36 @@ def export_website_data(all_models, best_name, best_year_preds, df):
                 "predicted_share": round(float(row["pred_share"]), 4),
                 "was_mvp": bool(row["Player"] == actual_mvp),
                 "actual_mvp": actual_mvp,
-            })
+            }
+            entry.update(_player_stats(prow))
+            deserving.append(entry)
+
+    # --- Scatter plot axes: percentile ranks across all candidates ---
+    def _z(arr):
+        a = np.array(arr, dtype=float)
+        mu, sd = a.mean(), a.std()
+        return (a - mu) / sd if sd > 0 else np.zeros_like(a)
+
+    ws_vals = [d["ws"] for d in deserving]
+    wp_vals = [d["win_pct"] for d in deserving]
+    seed_vals = [1.0 / max(d["conf_seed"], 1) for d in deserving]
+    winning_raw = _z(ws_vals) + _z(wp_vals) + _z(seed_vals)
+
+    bpm_vals = [d["bpm"] for d in deserving]
+    per_vals = [d["per"] for d in deserving]
+    pts_vals = [d["pts"] for d in deserving]
+    vorp_vals = [d["vorp"] for d in deserving]
+    indiv_raw = _z(bpm_vals) + _z(per_vals) + _z(pts_vals) + _z(vorp_vals)
+
+    for i, d in enumerate(deserving):
+        d["winning_pctile"] = round(float(percentileofscore(winning_raw, winning_raw[i], kind="rank")), 1)
+        d["individual_pctile"] = round(float(percentileofscore(indiv_raw, indiv_raw[i], kind="rank")), 1)
 
     t1, t3, t5, n = scores(results)
     data = {
         "best_model": best_name,
         "summary": {"top1": t1, "top3": t3, "top5": t5, "n": n},
         "years": years_data,
-        "models": model_table,
         "deserving": deserving,
     }
 

@@ -14,8 +14,11 @@
   </header>
 
   <div class="container">
+    <p class="model-description">Predictions from an XGBoost model trained on 51 features — player stats, team record, and historical MVP patterns. Each year is predicted using a model trained on all other seasons, so no future data leaks into predictions.</p>
+
     <div class="tabs">
       <button class="tab-btn active" data-tab="years">Year-by-Year Results</button>
+      <button class="tab-btn" data-tab="scatter">MVP Scatter Plot</button>
       <button class="tab-btn" data-tab="deserving">Most / Least Deserving</button>
       <button class="tab-btn" data-tab="alltime">All-Time Great Seasons</button>
     </div>
@@ -46,24 +49,31 @@
         </thead>
         <tbody></tbody>
       </table>
+    </div>
 
-      <div class="model-table-wrap">
-        <h3>Model Comparison</h3>
-        <table id="model-table">
-          <thead>
-            <tr>
-              <th>Model</th>
-              <th>Top-1</th>
-              <th>Top-3</th>
-              <th>Top-5</th>
-            </tr>
-          </thead>
-          <tbody></tbody>
-        </table>
+    <!-- Tab 2: Scatter Plot -->
+    <div id="tab-scatter" class="tab-content" style="display:none">
+      <p class="tab-description">Every MVP candidate plotted by two composite dimensions. <strong>Winning Impact</strong> (x-axis) captures team success — win shares, win percentage, and conference seed. <strong>Individual Dominance</strong> (y-axis) captures personal performance — BPM, PER, points, and VORP. Both axes are percentile ranks across all ~6,000 candidates. Dot size reflects predicted vote share.</p>
+      <div class="filter-bar">
+        <label for="scatter-year-from">From:</label>
+        <select id="scatter-year-from"></select>
+        <label for="scatter-year-to">To:</label>
+        <select id="scatter-year-to"></select>
+        <label for="scatter-topn">Per year:</label>
+        <select id="scatter-topn">
+          <option value="5" selected>Top 5</option>
+          <option value="10">Top 10</option>
+          <option value="0">All</option>
+        </select>
+        <label class="toggle-label"><input type="checkbox" id="scatter-mvps-only"> MVPs only</label>
+      </div>
+      <div class="scatter-wrap">
+        <canvas id="scatter-canvas" width="800" height="600"></canvas>
+        <div id="scatter-tooltip" class="scatter-tooltip"></div>
       </div>
     </div>
 
-    <!-- Tab 2: Deserving -->
+    <!-- Tab 3: Deserving -->
     <div id="tab-deserving" class="tab-content" style="display:none">
       <div class="deserving-section">
         <h3>Biggest Snubs — Highest Predicted Share Among Non-Winners</h3>
@@ -100,7 +110,7 @@
       </div>
     </div>
 
-    <!-- Tab 3: All-Time Great Seasons -->
+    <!-- Tab 4: All-Time Great Seasons -->
     <div id="tab-alltime" class="tab-content" style="display:none">
       <p class="tab-description">Player-seasons ranked by predicted vote share across all years. A high predicted share means the model sees that season as an all-time great MVP case regardless of who else was playing that year.</p>
       <div class="filter-bar">
@@ -149,11 +159,11 @@ async function init() {
   renderSummary();
   populateFilters();
   renderYears();
-  renderModels();
   renderDeserving();
   renderAllTime();
   setupTabs();
   setupSort();
+  setupScatter();
 }
 
 function renderSummary() {
@@ -181,12 +191,36 @@ function populateFilters() {
   document.getElementById("match-filter").addEventListener("change", renderYears);
   document.getElementById("alltime-count").addEventListener("change", renderAllTime);
   document.getElementById("alltime-winner-filter").addEventListener("change", renderAllTime);
+
+  // Scatter filters
+  const sfrom = document.getElementById("scatter-year-from");
+  const sto = document.getElementById("scatter-year-to");
+  years.forEach(y => {
+    sfrom.add(new Option(y, y));
+    sto.add(new Option(y, y));
+  });
+  sfrom.value = years[0];
+  sto.value = years[years.length - 1];
+  sfrom.addEventListener("change", drawScatter);
+  sto.addEventListener("change", drawScatter);
+  document.getElementById("scatter-topn").addEventListener("change", drawScatter);
+  document.getElementById("scatter-mvps-only").addEventListener("change", drawScatter);
 }
 
 function matchIcon(m) {
   if (m === "correct") return '<span class="match-icon match-correct">\u2713</span>';
   if (m === "top3") return '<span class="match-icon match-top3">~</span>';
   return '<span class="match-icon match-miss">\u2717</span>';
+}
+
+function statLine(p) {
+  const fg = p.fg_pct != null ? (p.fg_pct * 100).toFixed(1) : "—";
+  const tp = p.three_pct != null ? (p.three_pct * 100).toFixed(1) : "—";
+  const bpm = p.bpm != null ? p.bpm.toFixed(1) : "—";
+  const ws = p.ws != null ? p.ws.toFixed(1) : "—";
+  const wins = p.team_wins != null ? Math.round(p.team_wins) : "?";
+  const seed = p.conf_seed != null ? Math.round(p.conf_seed) : "?";
+  return `<span class="stat-line">${p.pts.toFixed(1)} PTS, ${(p.trb||0).toFixed(1)} TRB, ${(p.ast||0).toFixed(1)} AST | ${fg}% FG, ${tp}% 3P | ${bpm} BPM, ${ws} WS | ${wins}W, #${seed}</span>`;
 }
 
 function renderYears() {
@@ -230,47 +264,31 @@ function toggleDetail(tr, y) {
   const td = document.createElement("td");
   td.colSpan = 4;
 
-  const makeActualList = (items) =>
-    items.map(p => `<li>${p.player} <span class="team">${p.team}</span> <span class="share">(${p.share.toFixed(3)})</span></li>`).join("");
-
-  const makePredList = (items) =>
+  const makeList = (items, shareCol, showNorm) =>
     items.map(p => {
-      const ns = p.norm_share ? ` — ${(p.norm_share * 100).toFixed(1)}% of field` : "";
-      const bar = p.norm_share ? pctBar(p.norm_share) : "";
-      return `<li>${p.player} <span class="team">${p.team}</span> <span class="share">(${p.share.toFixed(3)}${ns})</span>${bar}</li>`;
+      const stats = statLine(p);
+      const ns = showNorm && p.norm_share ? ` — ${(p.norm_share * 100).toFixed(1)}%` : "";
+      const bar = showNorm && p.norm_share ? pctBar(p.norm_share) : "";
+      return `<li>
+        <div class="detail-player">${p.player} <span class="team">${p.team}</span> <span class="share">(${p.share.toFixed(3)}${ns})</span>${bar}</div>
+        <div class="detail-stats">${stats}</div>
+      </li>`;
     }).join("");
 
   td.innerHTML = `
     <div class="detail-content">
       <div class="detail-panel">
         <h4>Actual Top 5 (by vote share)</h4>
-        <ol>${makeActualList(y.actual_top5)}</ol>
+        <ol>${makeList(y.actual_top5, "share", false)}</ol>
       </div>
       <div class="detail-panel">
         <h4>Predicted Top 5 (within-year share)</h4>
-        <ol>${makePredList(y.predicted_top5)}</ol>
+        <ol>${makeList(y.predicted_top5, "share", true)}</ol>
       </div>
     </div>
   `;
   detail.appendChild(td);
   tr.after(detail);
-}
-
-function renderModels() {
-  const tbody = document.querySelector("#model-table tbody");
-  DATA.models.forEach(m => {
-    const tr = document.createElement("tr");
-    if (m.model === DATA.best_model) tr.className = "best-model";
-    const t3 = m.top3 > 0 ? `${m.top3}/${m.n}` : "-";
-    const t5 = m.top5 > 0 ? `${m.top5}/${m.n}` : "-";
-    tr.innerHTML = `
-      <td>${m.model}${m.model === DATA.best_model ? " \u2b50" : ""}</td>
-      <td>${m.top1}/${m.n}</td>
-      <td>${t3}</td>
-      <td>${t5}</td>
-    `;
-    tbody.appendChild(tr);
-  });
 }
 
 function renderDeserving() {
@@ -349,6 +367,7 @@ function setupTabs() {
       btn.classList.add("active");
       document.querySelectorAll(".tab-content").forEach(c => c.style.display = "none");
       document.getElementById("tab-" + btn.dataset.tab).style.display = "block";
+      if (btn.dataset.tab === "scatter") drawScatter();
     });
   });
 }
@@ -379,6 +398,171 @@ function setupSort() {
       rows.forEach(r => tbody.appendChild(r));
     });
   });
+}
+
+/* ===== Scatter Plot ===== */
+
+let scatterDots = [];  // cached for hover lookup
+
+function setupScatter() {
+  const canvas = document.getElementById("scatter-canvas");
+  const tooltip = document.getElementById("scatter-tooltip");
+
+  canvas.addEventListener("mousemove", (e) => {
+    const rect = canvas.getBoundingClientRect();
+    const mx = e.clientX - rect.left;
+    const my = e.clientY - rect.top;
+    const sx = mx / rect.width * canvas.width;
+    const sy = my / rect.height * canvas.height;
+
+    let hit = null;
+    let minDist = Infinity;
+    for (const dot of scatterDots) {
+      const dx = dot.cx - sx, dy = dot.cy - sy;
+      const dist = dx * dx + dy * dy;
+      if (dist < dot.r * dot.r + 100 && dist < minDist) {
+        minDist = dist;
+        hit = dot;
+      }
+    }
+
+    if (hit) {
+      const d = hit.data;
+      const fg = d.fg_pct != null ? (d.fg_pct * 100).toFixed(1) : "—";
+      tooltip.innerHTML = `<strong>${d.player}</strong> (${d.year}, ${d.team})<br>` +
+        `${d.pts.toFixed(1)} PTS, ${(d.trb||0).toFixed(1)} TRB, ${(d.ast||0).toFixed(1)} AST<br>` +
+        `${fg}% FG | ${(d.bpm||0).toFixed(1)} BPM, ${(d.ws||0).toFixed(1)} WS<br>` +
+        `Pred share: ${d.predicted_share.toFixed(3)}` +
+        (d.was_mvp ? " <strong>★ MVP</strong>" : "");
+      tooltip.style.display = "block";
+      tooltip.style.left = (e.clientX - rect.left + 14) + "px";
+      tooltip.style.top = (e.clientY - rect.top - 10) + "px";
+
+      // Keep tooltip within canvas area
+      const tw = tooltip.offsetWidth;
+      if (e.clientX - rect.left + 14 + tw > rect.width) {
+        tooltip.style.left = (e.clientX - rect.left - tw - 10) + "px";
+      }
+    } else {
+      tooltip.style.display = "none";
+    }
+  });
+
+  canvas.addEventListener("mouseleave", () => {
+    tooltip.style.display = "none";
+  });
+}
+
+function drawScatter() {
+  const canvas = document.getElementById("scatter-canvas");
+  const ctx = canvas.getContext("2d");
+  const dpr = window.devicePixelRatio || 1;
+  const W = 800, H = 600;
+  canvas.width = W * dpr;
+  canvas.height = H * dpr;
+  canvas.style.width = W + "px";
+  canvas.style.height = H + "px";
+  ctx.scale(dpr, dpr);
+
+  const from = +document.getElementById("scatter-year-from").value;
+  const to = +document.getElementById("scatter-year-to").value;
+  const topN = +document.getElementById("scatter-topn").value;
+  const mvpOnly = document.getElementById("scatter-mvps-only").checked;
+
+  // Filter data
+  let pool = DATA.deserving.filter(d =>
+    d.year >= from && d.year <= to &&
+    d.winning_pctile != null && d.individual_pctile != null
+  );
+
+  if (topN > 0) {
+    // Keep only top N by predicted_share per year
+    const byYear = {};
+    pool.forEach(d => { (byYear[d.year] = byYear[d.year] || []).push(d); });
+    pool = [];
+    for (const yr in byYear) {
+      byYear[yr].sort((a, b) => b.predicted_share - a.predicted_share);
+      pool.push(...byYear[yr].slice(0, topN));
+    }
+  }
+
+  if (mvpOnly) pool = pool.filter(d => d.was_mvp);
+
+  // Margins
+  const ml = 60, mr = 20, mt = 20, mb = 50;
+  const pw = W - ml - mr, ph = H - mt - mb;
+
+  // Clear
+  ctx.fillStyle = "#0d1117";
+  ctx.fillRect(0, 0, W, H);
+
+  // Grid
+  ctx.strokeStyle = "#30363d";
+  ctx.lineWidth = 0.5;
+  for (let i = 0; i <= 100; i += 20) {
+    const x = ml + (i / 100) * pw;
+    const y = mt + (1 - i / 100) * ph;
+    ctx.beginPath(); ctx.moveTo(x, mt); ctx.lineTo(x, mt + ph); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(ml, y); ctx.lineTo(ml + pw, y); ctx.stroke();
+    ctx.fillStyle = "#8b949e";
+    ctx.font = "11px -apple-system, sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillText(i, x, mt + ph + 16);
+    ctx.textAlign = "right";
+    ctx.fillText(i, ml - 8, y + 4);
+  }
+
+  // Axis labels
+  ctx.fillStyle = "#8b949e";
+  ctx.font = "12px -apple-system, sans-serif";
+  ctx.textAlign = "center";
+  ctx.fillText("Winning Impact (WS + Win% + Seed) — Percentile", ml + pw / 2, H - 6);
+  ctx.save();
+  ctx.translate(14, mt + ph / 2);
+  ctx.rotate(-Math.PI / 2);
+  ctx.fillText("Individual Dominance (BPM + PER + PTS + VORP) — Percentile", 0, 0);
+  ctx.restore();
+
+  // Sort so MVPs draw on top
+  pool.sort((a, b) => (a.was_mvp ? 1 : 0) - (b.was_mvp ? 1 : 0));
+
+  // Max share for sizing
+  const maxShare = Math.max(...pool.map(d => d.predicted_share), 0.01);
+
+  scatterDots = [];
+  pool.forEach(d => {
+    const cx = ml + (d.winning_pctile / 100) * pw;
+    const cy = mt + (1 - d.individual_pctile / 100) * ph;
+    const r = 3 + (d.predicted_share / maxShare) * 8;
+
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, 0, Math.PI * 2);
+    if (d.was_mvp) {
+      ctx.fillStyle = "rgba(240, 177, 50, 0.85)";
+      ctx.strokeStyle = "#f0b132";
+    } else {
+      ctx.fillStyle = "rgba(56, 139, 253, 0.5)";
+      ctx.strokeStyle = "rgba(56, 139, 253, 0.7)";
+    }
+    ctx.fill();
+    ctx.lineWidth = 1;
+    ctx.stroke();
+
+    scatterDots.push({ cx, cy, r, data: d });
+  });
+
+  // Legend
+  ctx.fillStyle = "rgba(240, 177, 50, 0.85)";
+  ctx.beginPath(); ctx.arc(ml + 10, mt + 16, 5, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = "#e6edf3";
+  ctx.font = "12px -apple-system, sans-serif";
+  ctx.textAlign = "left";
+  ctx.fillText("MVP Winner", ml + 20, mt + 20);
+
+  ctx.fillStyle = "rgba(56, 139, 253, 0.6)";
+  ctx.beginPath(); ctx.arc(ml + 10, mt + 36, 5, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = "#e6edf3";
+  ctx.fillText("Non-winner", ml + 20, mt + 40);
 }
 
 init();
