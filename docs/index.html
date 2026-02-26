@@ -411,8 +411,9 @@ function setupScatter() {
     const rect = canvas.getBoundingClientRect();
     const mx = e.clientX - rect.left;
     const my = e.clientY - rect.top;
-    const sx = mx / rect.width * canvas.width;
-    const sy = my / rect.height * canvas.height;
+    // Convert mouse position to logical canvas coordinates (before DPR scaling)
+    const sx = mx / rect.width * 800;
+    const sy = my / rect.height * 600;
 
     let hit = null;
     let minDist = Infinity;
