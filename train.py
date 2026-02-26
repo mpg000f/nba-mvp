@@ -408,12 +408,16 @@ def _player_stats(prow):
         "fg_pct": _safe_float(prow, "FG%"),
         "three_pct": _safe_float(prow, "3P%"),
         "bpm": _safe_float(prow, "BPM"),
+        "obpm": _safe_float(prow, "OBPM"),
         "ws": _safe_float(prow, "WS"),
+        "ws48": _safe_float(prow, "WS/48"),
+        "ows": _safe_float(prow, "OWS"),
         "per": _safe_float(prow, "PER"),
         "vorp": _safe_float(prow, "VORP"),
         "win_pct": _safe_float(prow, "WinPct"),
         "conf_seed": _safe_float(prow, "ConfSeed"),
         "team_wins": _safe_float(prow, "TeamWins"),
+        "best_record_conf": _safe_float(prow, "BestRecordConf"),
     }
 
 
@@ -493,9 +497,14 @@ def export_website_data(all_models, best_name, best_year_preds, df):
         return (a - mu) / sd if sd > 0 else np.zeros_like(a)
 
     ws_vals = [d["ws"] for d in deserving]
+    ws48_vals = [d["ws48"] for d in deserving]
+    ows_vals = [d["ows"] for d in deserving]
+    obpm_vals = [d["obpm"] for d in deserving]
     wp_vals = [d["win_pct"] for d in deserving]
     seed_vals = [1.0 / max(d["conf_seed"], 1) for d in deserving]
-    winning_raw = _z(ws_vals) + _z(wp_vals) + _z(seed_vals)
+    brc_vals = [d["best_record_conf"] for d in deserving]
+    winning_raw = (_z(ws_vals) + _z(ws48_vals) + _z(ows_vals) + _z(obpm_vals)
+                   + _z(wp_vals) + _z(seed_vals) + _z(brc_vals))
 
     bpm_vals = [d["bpm"] for d in deserving]
     per_vals = [d["per"] for d in deserving]
