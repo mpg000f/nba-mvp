@@ -65,6 +65,9 @@
           <option value="10">Top 10</option>
         </select>
         <label class="toggle-label"><input type="checkbox" id="scatter-mvps-only"> MVPs only</label>
+        <label for="scatter-player">Player:</label>
+        <input type="text" id="scatter-player" placeholder="e.g. LeBron" list="scatter-player-list" autocomplete="off">
+        <datalist id="scatter-player-list"></datalist>
       </div>
       <div class="scatter-wrap">
         <canvas id="scatter-canvas" width="800" height="600"></canvas>
@@ -204,6 +207,15 @@ function populateFilters() {
   sto.addEventListener("change", drawScatter);
   document.getElementById("scatter-topn").addEventListener("change", drawScatter);
   document.getElementById("scatter-mvps-only").addEventListener("change", drawScatter);
+
+  // Player search with datalist autocomplete
+  const playerInput = document.getElementById("scatter-player");
+  const playerList = document.getElementById("scatter-player-list");
+  const uniqueNames = [...new Set(DATA.deserving.map(d => d.player))].sort();
+  uniqueNames.forEach(name => {
+    playerList.appendChild(new Option(name));
+  });
+  playerInput.addEventListener("input", drawScatter);
 }
 
 function matchIcon(m) {
@@ -511,6 +523,12 @@ function drawScatter() {
   }
 
   if (mvpOnly) pool = pool.filter(d => d.was_mvp);
+
+  // Player name filter
+  const playerQuery = document.getElementById("scatter-player").value.trim().toLowerCase();
+  if (playerQuery) {
+    pool = pool.filter(d => d.player.toLowerCase().includes(playerQuery));
+  }
 
   // Rescale to 0-100 within the filtered group
   pool = rescalePercentiles(pool);
