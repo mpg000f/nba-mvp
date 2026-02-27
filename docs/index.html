@@ -467,25 +467,25 @@ function setupScatter() {
 }
 
 function rescalePercentiles(pool) {
-  // Recompute percentile ranks within this filtered group
-  const winVals = pool.map(d => d.winning_pctile);
-  const indVals = pool.map(d => d.individual_pctile);
-  winVals.sort((a, b) => a - b);
-  indVals.sort((a, b) => a - b);
+  // Compute percentile ranks within this filtered group from raw SHAP sums
+  const teamVals = pool.map(d => d.shap_team).slice().sort((a, b) => a - b);
+  const indivVals = pool.map(d => d.shap_indiv).slice().sort((a, b) => a - b);
 
   function pctRank(sorted, val) {
-    let below = 0;
-    for (let i = 0; i < sorted.length; i++) {
-      if (sorted[i] < val) below++;
-      else break;
+    // Count values strictly less than val
+    let lo = 0, hi = sorted.length;
+    while (lo < hi) {
+      const mid = (lo + hi) >> 1;
+      if (sorted[mid] < val) lo = mid + 1;
+      else hi = mid;
     }
-    return sorted.length > 1 ? (below / (sorted.length - 1)) * 100 : 50;
+    return sorted.length > 1 ? (lo / (sorted.length - 1)) * 100 : 50;
   }
 
   return pool.map(d => ({
     ...d,
-    _wx: pctRank(winVals, d.winning_pctile),
-    _iy: pctRank(indVals, d.individual_pctile),
+    _wx: pctRank(teamVals, d.shap_team),
+    _iy: pctRank(indivVals, d.shap_indiv),
   }));
 }
 
@@ -508,7 +508,7 @@ function drawScatter() {
   // Filter data — year range first
   let pool = DATA.deserving.filter(d =>
     d.year >= from && d.year <= to &&
-    d.winning_pctile != null && d.individual_pctile != null
+    d.shap_team != null && d.shap_indiv != null
   );
 
   // Keep only top N by predicted_share per year

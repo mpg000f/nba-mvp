@@ -517,25 +517,15 @@ def export_website_data(all_models, best_name, best_year_preds, df, shap_rows=No
             shap_lookup[(player, year)] = (team_shap, indiv_shap)
         log(f"SHAP values computed for {len(shap_lookup)} player-seasons")
 
-    # Assign raw SHAP sums to deserving entries
-    team_vals, indiv_vals = [], []
+    # Assign raw SHAP sums — frontend rescales to percentile within filtered group
     for d in deserving:
         key = (d["player"], d["year"])
         if key in shap_lookup:
             t, i = shap_lookup[key]
         else:
             t, i = 0.0, 0.0
-        team_vals.append(t)
-        indiv_vals.append(i)
-
-    # Convert to percentile ranks
-    team_arr = np.array(team_vals)
-    indiv_arr = np.array(indiv_vals)
-    for idx, d in enumerate(deserving):
-        d["winning_pctile"] = round(float(
-            percentileofscore(team_arr, team_arr[idx], kind="rank")), 1)
-        d["individual_pctile"] = round(float(
-            percentileofscore(indiv_arr, indiv_arr[idx], kind="rank")), 1)
+        d["shap_team"] = round(float(t), 5)
+        d["shap_indiv"] = round(float(i), 5)
 
     t1, t3, t5, n = scores(results)
     data = {
