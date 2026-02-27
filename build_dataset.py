@@ -273,11 +273,14 @@ def main():
         if c in dataset.columns:
             dataset[c] = pd.to_numeric(dataset[c], errors="coerce")
 
-    # Filter: GP >= 50 and MPG >= 25
+    # Filter: GP >= 60% of season and MPG >= 25
+    # Use proportional cutoff so shortened seasons (1999, 2012, 2020, 2021) aren't penalized
     pre_filter = len(dataset)
     if "G" in dataset.columns and "MP" in dataset.columns:
-        dataset = dataset[(dataset["G"] >= 50) & (dataset["MP"] >= 25.0)].copy()
-    print(f"Filtered {pre_filter} -> {len(dataset)} rows (G>=50, MPG>=25)")
+        max_games_per_year = dataset.groupby("Year")["G"].transform("max")
+        min_games = (max_games_per_year * 0.6).clip(lower=1)
+        dataset = dataset[(dataset["G"] >= min_games) & (dataset["MP"] >= 25.0)].copy()
+    print(f"Filtered {pre_filter} -> {len(dataset)} rows (G>=60% of season, MPG>=25)")
 
     # Fill remaining NaN in numeric features with 0
     for c in numeric_cols:
