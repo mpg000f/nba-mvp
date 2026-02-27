@@ -8,6 +8,7 @@ import numpy as np
 from sklearn.linear_model import Lasso
 from sklearn.preprocessing import StandardScaler
 from xgboost import XGBRegressor, XGBRanker, XGBClassifier
+import shap
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
@@ -77,10 +78,11 @@ def year_result(test_df, pred_col="pred_share"):
 # ---------------------------------------------------------------------------
 
 def loocv_regressor(df, features, model_class=XGBRegressor, model_kwargs=None,
-                    scale=False):
+                    scale=False, compute_shap=False):
     model_kwargs = model_kwargs or XGB_KWARGS
     years = sorted(df["Year"].unique())
     results, year_preds = [], {}
+    shap_rows = []  # list of (Player, Year, {feat: shap_val})
 
     for year in years:
         train, test = df[df["Year"] != year], df[df["Year"] == year]
@@ -102,11 +104,18 @@ def loocv_regressor(df, features, model_class=XGBRegressor, model_kwargs=None,
         tdf["pred_share"] = preds
         year_preds[year] = tdf
 
+        if compute_shap and not scale:
+            explainer = shap.TreeExplainer(m)
+            sv = explainer.shap_values(X_te)  # shape: (n_players, n_features)
+            for i, (_, row) in enumerate(test.iterrows()):
+                shap_dict = {features[j]: float(sv[i, j]) for j in range(len(features))}
+                shap_rows.append((row["Player"], int(year), shap_dict))
+
         r = year_result(tdf)
         r["Year"] = int(year)
         results.append(r)
 
-    return results, year_preds
+    return results, year_preds, shap_rows
 
 
 def loocv_ranker(df, features):
@@ -421,7 +430,7 @@ def _player_stats(prow):
     }
 
 
-def export_website_data(all_models, best_name, best_year_preds, df):
+def export_website_data(all_models, best_name, best_year_preds, df, shap_rows=None):
     """Export JSON data for the GitHub Pages site."""
     os.makedirs("docs", exist_ok=True)
     from scipy.stats import percentileofscore
@@ -490,58 +499,43 @@ def export_website_data(all_models, best_name, best_year_preds, df):
             entry.update(_player_stats(prow))
             deserving.append(entry)
 
-    # --- Prorate cumulative stats for shortened seasons ---
-    # Determine season length per year from max(TeamWins / WinPct)
-    season_games = {}
-    for year, tdf in best_year_preds.items():
-        year_full = df[df["Year"] == year]
-        max_g = int(year_full["G"].max())
-        # Use TeamWins/WinPct for a more accurate season length
-        valid = year_full[year_full["WinPct"] > 0]
-        if len(valid) > 0:
-            implied = (valid["TeamWins"] / valid["WinPct"]).median()
-            season_games[int(year)] = round(float(implied))
+    # --- SHAP-based scatter plot axes ---
+    # Split features into individual performance vs team context / winning
+    TEAM_FEATURES = {
+        "WinPct", "TeamWins", "ConfSeed", "OWS", "DWS", "WS", "WS/48",
+        "BestRecordConf", "BestRecordLeague", "WinImprovement",
+        "PriorMVPs", "YearsSinceLastMVP", "AgePrime",
+    }
+    # Everything else = individual performance (PTS, TRB, AST, PER, BPM, etc.)
+
+    # Build lookup: (player, year) -> SHAP sums
+    shap_lookup = {}
+    if shap_rows:
+        for player, year, shap_dict in shap_rows:
+            team_shap = sum(v for k, v in shap_dict.items() if k in TEAM_FEATURES)
+            indiv_shap = sum(v for k, v in shap_dict.items() if k not in TEAM_FEATURES)
+            shap_lookup[(player, year)] = (team_shap, indiv_shap)
+        log(f"SHAP values computed for {len(shap_lookup)} player-seasons")
+
+    # Assign raw SHAP sums to deserving entries
+    team_vals, indiv_vals = [], []
+    for d in deserving:
+        key = (d["player"], d["year"])
+        if key in shap_lookup:
+            t, i = shap_lookup[key]
         else:
-            season_games[int(year)] = max_g
-    log(f"Shortened seasons detected: "
-        + ", ".join(f"{y}={g}G" for y, g in sorted(season_games.items()) if g < 82))
+            t, i = 0.0, 0.0
+        team_vals.append(t)
+        indiv_vals.append(i)
 
-    def _prorate(val, year):
-        """Scale a cumulative stat to 82-game equivalent."""
-        sg = season_games.get(year, 82)
-        return val * 82.0 / sg if sg < 82 else val
-
-    # --- Scatter plot axes: percentile ranks across all candidates ---
-    def _z(arr):
-        a = np.array(arr, dtype=float)
-        mu, sd = a.mean(), a.std()
-        return (a - mu) / sd if sd > 0 else np.zeros_like(a)
-
-    # Prorate cumulative stats (WS, OWS, VORP) for shortened seasons
-    ws_vals = [_prorate(d["ws"], d["year"]) for d in deserving]
-    ws48_vals = [d["ws48"] for d in deserving]  # rate stat, no proration
-    ows_vals = [_prorate(d["ows"], d["year"]) for d in deserving]
-    obpm_vals = [d["obpm"] for d in deserving]  # rate stat
-    wp_vals = [d["win_pct"] for d in deserving]
-    seed_vals = [1.0 / max(d["conf_seed"], 1) for d in deserving]
-    brc_vals = [d["best_record_conf"] for d in deserving]
-    winning_raw = (_z(ws_vals) + _z(ws48_vals) + _z(ows_vals) + _z(obpm_vals)
-                   + _z(wp_vals) + _z(seed_vals) + _z(brc_vals))
-
-    bpm_vals = [d["bpm"] for d in deserving]  # rate stat
-    per_vals = [d["per"] for d in deserving]   # rate stat
-    pts_vals = [d["pts"] for d in deserving]   # per-game
-    vorp_vals = [_prorate(d["vorp"], d["year"]) for d in deserving]
-    trb_vals = [d["trb"] for d in deserving]   # per-game
-    ast_vals = [d["ast"] for d in deserving]   # per-game
-    stl_vals = [d["stl"] for d in deserving]   # per-game
-    blk_vals = [d["blk"] for d in deserving]   # per-game
-    indiv_raw = (_z(bpm_vals) + _z(per_vals) + _z(pts_vals) + _z(vorp_vals)
-                 + _z(trb_vals) + _z(ast_vals) + _z(stl_vals) + _z(blk_vals))
-
-    for i, d in enumerate(deserving):
-        d["winning_pctile"] = round(float(percentileofscore(winning_raw, winning_raw[i], kind="rank")), 1)
-        d["individual_pctile"] = round(float(percentileofscore(indiv_raw, indiv_raw[i], kind="rank")), 1)
+    # Convert to percentile ranks
+    team_arr = np.array(team_vals)
+    indiv_arr = np.array(indiv_vals)
+    for idx, d in enumerate(deserving):
+        d["winning_pctile"] = round(float(
+            percentileofscore(team_arr, team_arr[idx], kind="rank")), 1)
+        d["individual_pctile"] = round(float(
+            percentileofscore(indiv_arr, indiv_arr[idx], kind="rank")), 1)
 
     t1, t3, t5, n = scores(results)
     data = {
@@ -577,19 +571,19 @@ def main():
 
     # 1. Lasso (45)
     log("\n[1/7] Lasso (45)...")
-    r, yp = loocv_regressor(df, f45, Lasso, {"alpha": 0.001, "max_iter": 10000}, scale=True)
+    r, yp, _ = loocv_regressor(df, f45, Lasso, {"alpha": 0.001, "max_iter": 10000}, scale=True)
     all_models["Lasso (45)"] = r
     all_preds["Lasso (45)"] = (r, yp)
 
     # 2. XGB-Regress (45)
     log("[2/7] XGB-Regress (45)...")
-    r, yp = loocv_regressor(df, f45)
+    r, yp, _ = loocv_regressor(df, f45)
     all_models["XGB-Regress (45)"] = r
     all_preds["XGB-Regress (45)"] = (r, yp)
 
     # 3. XGB-Regress+Narr (51)
     log("[3/7] XGB-Regress+Narr (51)...")
-    r_narr, yp_narr = loocv_regressor(df, f51)
+    r_narr, yp_narr, shap_rows = loocv_regressor(df, f51, compute_shap=True)
     all_models["XGB-Regress+Narr (51)"] = r_narr
     all_preds["XGB-Regress+Narr (51)"] = (r_narr, yp_narr)
 
@@ -656,7 +650,7 @@ def main():
         "XGB-Top3 (51)": all_preds["XGB-Top3 (51)"][1],
     }
     best_yp = best_preds_map.get(best_name, yp_narr)
-    export_website_data(all_models, best_name, best_yp, df)
+    export_website_data(all_models, best_name, best_yp, df, shap_rows)
 
 
 if __name__ == "__main__":
