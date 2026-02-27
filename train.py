@@ -25,6 +25,14 @@ FEATURES = [
     "WinPct", "TeamWins", "ConfSeed",
 ]
 
+# Counting stats that are pace-sensitive — z-score normalize within each year
+# Rate/efficiency stats (PER, TS%, WS/48, BPM, FG%, etc.) are already pace-neutral
+PACE_SENSITIVE = {
+    "G", "GS", "MP", "FG", "FGA", "3P", "3PA", "FT", "FTA",
+    "ORB", "DRB", "TRB", "AST", "STL", "BLK", "TOV", "PF", "PTS",
+    "OWS", "DWS", "WS", "VORP",
+}
+
 NARRATIVE_FEATURES = [
     "PriorMVPs", "YearsSinceLastMVP", "WinImprovement",
     "BestRecordConf", "BestRecordLeague", "AgePrime",
@@ -408,21 +416,27 @@ def _safe_float(prow, col):
 
 
 def _player_stats(prow):
-    """Pull stat fields from a matched row in the full-year DataFrame."""
+    """Pull stat fields from a matched row — use raw (pre-z-score) values for display."""
+    def raw(col):
+        """Use _raw column if available (pace-sensitive stats), else original."""
+        raw_col = f"{col}_raw"
+        if len(prow) > 0 and raw_col in prow.columns:
+            return round(float(prow[raw_col].values[0]), 1)
+        return _safe_float(prow, col)
     return {
-        "trb": _safe_float(prow, "TRB"),
-        "ast": _safe_float(prow, "AST"),
-        "stl": _safe_float(prow, "STL"),
-        "blk": _safe_float(prow, "BLK"),
-        "fg_pct": _safe_float(prow, "FG%"),
-        "three_pct": _safe_float(prow, "3P%"),
-        "bpm": _safe_float(prow, "BPM"),
-        "obpm": _safe_float(prow, "OBPM"),
-        "ws": _safe_float(prow, "WS"),
-        "ws48": _safe_float(prow, "WS/48"),
-        "ows": _safe_float(prow, "OWS"),
-        "per": _safe_float(prow, "PER"),
-        "vorp": _safe_float(prow, "VORP"),
+        "trb": raw("TRB"),
+        "ast": raw("AST"),
+        "stl": raw("STL"),
+        "blk": raw("BLK"),
+        "fg_pct": _safe_float(prow, "FG%"),       # rate stat, not z-scored
+        "three_pct": _safe_float(prow, "3P%"),     # rate stat
+        "bpm": _safe_float(prow, "BPM"),           # rate stat
+        "obpm": _safe_float(prow, "OBPM"),         # rate stat
+        "ws": raw("WS"),
+        "ws48": _safe_float(prow, "WS/48"),        # rate stat
+        "ows": raw("OWS"),
+        "per": _safe_float(prow, "PER"),           # rate stat
+        "vorp": raw("VORP"),
         "win_pct": _safe_float(prow, "WinPct"),
         "conf_seed": _safe_float(prow, "ConfSeed"),
         "team_wins": _safe_float(prow, "TeamWins"),
@@ -459,7 +473,7 @@ def export_website_data(all_models, best_name, best_year_preds, df, shap_rows=No
         def player_info(row, share_col, norm_total=None):
             p = row["Player"]
             prow = year_full[year_full["Player"] == p]
-            pts = float(prow["PTS"].values[0]) if len(prow) > 0 else 0
+            pts = float(prow["PTS_raw"].values[0]) if (len(prow) > 0 and "PTS_raw" in prow.columns) else (float(prow["PTS"].values[0]) if len(prow) > 0 else 0)
             tm = str(prow["Tm"].values[0]) if len(prow) > 0 else row.get("Tm", "")
             info = {
                 "player": p,
@@ -493,7 +507,7 @@ def export_website_data(all_models, best_name, best_year_preds, df, shap_rows=No
         actual_mvp = tdf.nlargest(1, TARGET).iloc[0]["Player"]
         for _, row in tdf.iterrows():
             prow = year_full[year_full["Player"] == row["Player"]]
-            pts = float(prow["PTS"].values[0]) if len(prow) > 0 else 0
+            pts = float(prow["PTS_raw"].values[0]) if (len(prow) > 0 and "PTS_raw" in prow.columns) else (float(prow["PTS"].values[0]) if len(prow) > 0 else 0)
             tm = str(prow["Tm"].values[0]) if len(prow) > 0 else str(row.get("Tm", ""))
             entry = {
                 "player": row["Player"],
@@ -594,6 +608,20 @@ def main():
     for f in f51:
         df[f] = pd.to_numeric(df[f], errors="coerce").fillna(0)
     df[TARGET] = pd.to_numeric(df[TARGET], errors="coerce").fillna(0)
+
+    # Preserve raw values for display before z-scoring
+    pace_cols = [c for c in PACE_SENSITIVE if c in df.columns]
+    for c in pace_cols:
+        df[f"{c}_raw"] = df[c].copy()
+
+    # Within-year z-score normalization for pace-sensitive counting stats
+    # This ensures cross-era comparisons are fair (e.g., 25 PPG in a slow era
+    # is treated as more impressive than 25 PPG in a fast era)
+    for c in pace_cols:
+        mean = df.groupby("Year")[c].transform("mean")
+        std = df.groupby("Year")[c].transform("std")
+        df[c] = ((df[c] - mean) / std.replace(0, 1)).fillna(0)
+    log(f"Z-score normalized {len(pace_cols)} pace-sensitive stats within each year")
 
     all_models = {}
     all_preds = {}  # name -> (results, year_preds)
