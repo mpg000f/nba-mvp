@@ -282,6 +282,30 @@ def main():
         dataset = dataset[(dataset["G"] >= min_games) & (dataset["MP"] >= 25.0)].copy()
     print(f"Filtered {pre_filter} -> {len(dataset)} rows (G>=60% of season, MPG>=25)")
 
+    # Prorate cumulative stats for shortened seasons to 82-game equivalents
+    # Affected: 1999 (50g), 2012 (66g), 2020 (~72g), 2021 (72g)
+    CUMULATIVE_STATS = ["OWS", "DWS", "WS", "VORP"]
+    season_lengths = {}
+    for year in dataset["Year"].unique():
+        year_data = dataset[dataset["Year"] == year]
+        valid = year_data[(year_data["WinPct"] > 0) & (year_data["TeamWins"] > 0)]
+        if len(valid) > 0:
+            implied = (valid["TeamWins"] / valid["WinPct"]).median()
+            season_lengths[year] = round(float(implied))
+        else:
+            season_lengths[year] = 82
+
+    shortened = {y: g for y, g in season_lengths.items() if g < 82}
+    if shortened:
+        print(f"Shortened seasons detected: {shortened}")
+        for year, games in shortened.items():
+            factor = 82.0 / games
+            mask = dataset["Year"] == year
+            for col in CUMULATIVE_STATS:
+                if col in dataset.columns:
+                    dataset.loc[mask, col] = dataset.loc[mask, col] * factor
+        print(f"Prorated {CUMULATIVE_STATS} to 82-game equivalents")
+
     # Fill remaining NaN in numeric features with 0
     for c in numeric_cols:
         if c in dataset.columns:
