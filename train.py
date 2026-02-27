@@ -435,6 +435,14 @@ def export_website_data(all_models, best_name, best_year_preds, df, shap_rows=No
     os.makedirs("docs", exist_ok=True)
     from scipy.stats import percentileofscore
 
+    # Load player code -> headshot URL mapping
+    codes_path = os.path.join(DATA_DIR, "player_codes.json")
+    player_codes = {}
+    if os.path.exists(codes_path):
+        with open(codes_path) as f:
+            player_codes = json.load(f)
+        log(f"Loaded {len(player_codes)} player headshot codes")
+
     # Per-year data from the best model
     years_data = []
     results = all_models[best_name]
@@ -458,6 +466,7 @@ def export_website_data(all_models, best_name, best_year_preds, df, shap_rows=No
                 "team": tm,
                 "share": round(float(row[share_col]), 4),
                 "pts": pts,
+                "headshot": player_codes.get(p, ""),
             }
             info.update(_player_stats(prow))
             if norm_total and norm_total > 0:
@@ -495,9 +504,30 @@ def export_website_data(all_models, best_name, best_year_preds, df, shap_rows=No
                 "predicted_share": round(float(row["pred_share"]), 4),
                 "was_mvp": bool(row["Player"] == actual_mvp),
                 "actual_mvp": actual_mvp,
+                "headshot": player_codes.get(row["Player"], ""),
             }
             entry.update(_player_stats(prow))
             deserving.append(entry)
+
+    # --- Add model rank and snub classification ---
+    for year, tdf in best_year_preds.items():
+        ranked = tdf.nlargest(len(tdf), "pred_share")
+        rank_map = {row["Player"]: i + 1 for i, (_, row) in enumerate(ranked.iterrows())}
+        actual_mvp = tdf.nlargest(1, TARGET).iloc[0]["Player"]
+        mvp_pred_share = float(tdf[tdf["Player"] == actual_mvp]["pred_share"].values[0])
+        for d in deserving:
+            if d["year"] == int(year):
+                d["model_rank"] = rank_map.get(d["player"], 999)
+                if d["was_mvp"]:
+                    d["snub_type"] = "winner"
+                elif d["model_rank"] == 1:
+                    # Model's #1 pick didn't win — true snub
+                    d["snub_type"] = "snub"
+                elif d["predicted_share"] > mvp_pred_share:
+                    # Model predicted them higher than actual winner
+                    d["snub_type"] = "snub"
+                else:
+                    d["snub_type"] = "deserving"
 
     # --- SHAP-based scatter plot axes ---
     # Split features into individual performance vs team context / winning

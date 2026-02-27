@@ -78,7 +78,8 @@
     <!-- Tab 3: Deserving -->
     <div id="tab-deserving" class="tab-content" style="display:none">
       <div class="deserving-section">
-        <h3>Biggest Snubs — Highest Predicted Share Among Non-Winners</h3>
+        <h3>Biggest Snubs &amp; Deserving Non-Winners</h3>
+        <p class="tab-description">A <strong>snub</strong> is when the model predicted a player to win over the actual winner — i.e. the model thinks they were robbed. <strong>Deserving</strong> means a great season, but the actual winner's stats were even stronger. Example: Jokić 2025 was incredible, but SGA's season was one of the best in the dataset — not a snub, just outshone.</p>
         <table id="snubs-table">
           <thead>
             <tr>
@@ -88,6 +89,7 @@
               <th class="sortable" data-col="predicted_share">Predicted Share</th>
               <th class="sortable" data-col="actual_share">Actual Share</th>
               <th>Who Won</th>
+              <th>Verdict</th>
             </tr>
           </thead>
           <tbody></tbody>
@@ -311,7 +313,9 @@ function renderDeserving() {
 
   const snubsTbody = document.querySelector("#snubs-table tbody");
   snubs.forEach(p => {
+    const isSnub = p.snub_type === "snub";
     const tr = document.createElement("tr");
+    if (isSnub) tr.className = "row-snub";
     tr.innerHTML = `
       <td>${p.player}</td>
       <td>${p.year}</td>
@@ -319,6 +323,7 @@ function renderDeserving() {
       <td>${p.predicted_share.toFixed(4)}</td>
       <td>${p.actual_share.toFixed(4)}</td>
       <td>${p.actual_mvp}</td>
+      <td><span class="verdict-badge ${isSnub ? 'verdict-snub' : 'verdict-deserving'}">${isSnub ? 'Snub' : 'Deserving'}</span></td>
     `;
     snubsTbody.appendChild(tr);
   });
@@ -414,6 +419,20 @@ function setupSort() {
 /* ===== Scatter Plot ===== */
 
 let scatterDots = [];  // cached for hover lookup
+const headshotCache = {};  // code -> Image (loaded or loading)
+const HEADSHOT_BASE = "https://www.basketball-reference.com/req/202106291/images/headshots/";
+
+function getHeadshot(code) {
+  if (!code) return null;
+  if (headshotCache[code]) return headshotCache[code];
+  const img = new Image();
+  img.crossOrigin = "anonymous";
+  img.src = HEADSHOT_BASE + code + ".jpg";
+  img.onload = () => { img._loaded = true; drawScatter(); };
+  img.onerror = () => { img._failed = true; };
+  headshotCache[code] = img;
+  return img;
+}
 
 function setupScatter() {
   const canvas = document.getElementById("scatter-canvas");
@@ -578,19 +597,41 @@ function drawScatter() {
   pool.forEach(d => {
     const cx = ml + (d._wx / 100) * pw;
     const cy = mt + (1 - d._iy / 100) * ph;
-    const r = 3 + (d.predicted_share / maxShare) * 8;
+    const r = Math.max(8, 8 + (d.predicted_share / maxShare) * 10);
+    const img = d.headshot ? getHeadshot(d.headshot) : null;
+    const borderColor = d.was_mvp ? "#f0b132" : "#388bfd";
+    const borderWidth = d.was_mvp ? 2.5 : 1.5;
 
+    ctx.save();
+    // Clip to circle
     ctx.beginPath();
     ctx.arc(cx, cy, r, 0, Math.PI * 2);
-    if (d.was_mvp) {
-      ctx.fillStyle = "rgba(240, 177, 50, 0.85)";
-      ctx.strokeStyle = "#f0b132";
+    ctx.closePath();
+    ctx.clip();
+
+    if (img && img._loaded) {
+      // Draw headshot cropped to circle
+      const s = r * 2;
+      ctx.drawImage(img, cx - r, cy - r, s, s);
     } else {
-      ctx.fillStyle = "rgba(56, 139, 253, 0.5)";
-      ctx.strokeStyle = "rgba(56, 139, 253, 0.7)";
+      // Fallback: colored circle with initials
+      ctx.fillStyle = d.was_mvp ? "rgba(240, 177, 50, 0.85)" : "rgba(56, 139, 253, 0.5)";
+      ctx.fillRect(cx - r, cy - r, r * 2, r * 2);
+      const parts = d.player.split(" ");
+      const initials = parts.length >= 2 ? parts[0][0] + parts[parts.length - 1][0] : d.player[0];
+      ctx.fillStyle = "#fff";
+      ctx.font = `bold ${Math.round(r * 0.9)}px -apple-system, sans-serif`;
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText(initials, cx, cy);
     }
-    ctx.fill();
-    ctx.lineWidth = 1;
+    ctx.restore();
+
+    // Border ring
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, 0, Math.PI * 2);
+    ctx.strokeStyle = borderColor;
+    ctx.lineWidth = borderWidth;
     ctx.stroke();
 
     scatterDots.push({ cx, cy, r, data: d });
@@ -599,15 +640,19 @@ function drawScatter() {
   // Legend
   ctx.fillStyle = "rgba(240, 177, 50, 0.85)";
   ctx.beginPath(); ctx.arc(ml + 10, mt + 16, 5, 0, Math.PI * 2); ctx.fill();
+  ctx.strokeStyle = "#f0b132"; ctx.lineWidth = 2.5;
+  ctx.beginPath(); ctx.arc(ml + 10, mt + 16, 5, 0, Math.PI * 2); ctx.stroke();
   ctx.fillStyle = "#e6edf3";
   ctx.font = "12px -apple-system, sans-serif";
   ctx.textAlign = "left";
-  ctx.fillText("MVP Winner", ml + 20, mt + 20);
+  ctx.fillText("MVP Winner (gold border)", ml + 20, mt + 20);
 
   ctx.fillStyle = "rgba(56, 139, 253, 0.6)";
   ctx.beginPath(); ctx.arc(ml + 10, mt + 36, 5, 0, Math.PI * 2); ctx.fill();
+  ctx.strokeStyle = "#388bfd"; ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.arc(ml + 10, mt + 36, 5, 0, Math.PI * 2); ctx.stroke();
   ctx.fillStyle = "#e6edf3";
-  ctx.fillText("Non-winner", ml + 20, mt + 40);
+  ctx.fillText("Non-winner (blue border)", ml + 20, mt + 40);
 
   // Count label
   ctx.fillStyle = "#8b949e";

@@ -336,6 +336,33 @@ tr.row-alltime-winner { background: rgba(240, 177, 50, 0.1); }
   gap: 4px;
 }
 
+/* Snub verdicts */
+.verdict-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.verdict-snub {
+  background: var(--red-bg);
+  color: var(--red);
+  border: 1px solid rgba(248, 81, 73, 0.3);
+}
+
+.verdict-deserving {
+  background: var(--green-bg);
+  color: var(--green);
+  border: 1px solid rgba(46, 160, 67, 0.3);
+}
+
+tr.row-snub {
+  background: rgba(248, 81, 73, 0.06);
+}
+
 /* Footer */
 footer {
   text-align: center;
