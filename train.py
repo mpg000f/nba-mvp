@@ -533,29 +533,38 @@ def export_website_data(all_models, best_name, best_year_preds, df, shap_rows=No
     # Split features into individual performance vs team context / winning
     TEAM_FEATURES = {
         "WinPct", "TeamWins", "ConfSeed", "OWS", "DWS", "WS", "WS/48",
-        "BestRecordConf", "BestRecordLeague", "WinImprovement",
+    }
+    # Narrative features: good for predicting votes, but don't reflect season quality
+    EXCLUDE_FEATURES = {
         "PriorMVPs", "YearsSinceLastMVP", "AgePrime",
+        "WinImprovement", "BestRecordConf", "BestRecordLeague",
     }
     # Everything else = individual performance (PTS, TRB, AST, PER, BPM, etc.)
 
-    # Build lookup: (player, year) -> SHAP sums
+    # Build lookup: (player, year) -> (team_shap, indiv_shap, top_features)
     shap_lookup = {}
     if shap_rows:
         for player, year, shap_dict in shap_rows:
-            team_shap = sum(v for k, v in shap_dict.items() if k in TEAM_FEATURES)
-            indiv_shap = sum(v for k, v in shap_dict.items() if k not in TEAM_FEATURES)
-            shap_lookup[(player, year)] = (team_shap, indiv_shap)
+            # Filter out narrative features that don't measure season quality
+            filtered = {k: v for k, v in shap_dict.items() if k not in EXCLUDE_FEATURES}
+            team_shap = sum(v for k, v in filtered.items() if k in TEAM_FEATURES)
+            indiv_shap = sum(v for k, v in filtered.items() if k not in TEAM_FEATURES)
+            # Top features by absolute magnitude
+            sorted_feats = sorted(filtered.items(), key=lambda x: abs(x[1]), reverse=True)
+            top = [[k, round(v, 4)] for k, v in sorted_feats[:8]]
+            shap_lookup[(player, year)] = (team_shap, indiv_shap, top)
         log(f"SHAP values computed for {len(shap_lookup)} player-seasons")
 
-    # Assign raw SHAP sums — frontend rescales to percentile within filtered group
+    # Assign raw SHAP sums + top features
     for d in deserving:
         key = (d["player"], d["year"])
         if key in shap_lookup:
-            t, i = shap_lookup[key]
+            t, i, top = shap_lookup[key]
         else:
-            t, i = 0.0, 0.0
+            t, i, top = 0.0, 0.0, []
         d["shap_team"] = round(float(t), 5)
         d["shap_indiv"] = round(float(i), 5)
+        d["shap_top"] = top
 
     t1, t3, t5, n = scores(results)
     data = {
