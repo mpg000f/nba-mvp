@@ -461,11 +461,21 @@ function setupScatter() {
     if (hit) {
       const d = hit.data;
       const fg = d.fg_pct != null ? (d.fg_pct * 100).toFixed(1) : "—";
-      tooltip.innerHTML = `<strong>${d.player}</strong> (${d.year}, ${d.team})<br>` +
-        `${d.pts.toFixed(1)} PTS, ${(d.trb||0).toFixed(1)} TRB, ${(d.ast||0).toFixed(1)} AST<br>` +
-        `${fg}% FG | ${(d.bpm||0).toFixed(1)} BPM, ${(d.ws||0).toFixed(1)} WS<br>` +
-        `Pred share: ${d.predicted_share.toFixed(3)}` +
-        (d.was_mvp ? " <strong>★ MVP</strong>" : "");
+      let shapHtml = "";
+      if (d.shap_top && d.shap_top.length > 0) {
+        const lines = d.shap_top.map(([feat, val]) => {
+          const sign = val >= 0 ? "+" : "";
+          const cls = val >= 0 ? "shap-pos" : "shap-neg";
+          return `<span class="${cls}">${sign}${val.toFixed(3)}</span> ${feat}`;
+        });
+        shapHtml = `<div class="shap-breakdown"><div class="shap-label">Model drivers:</div>${lines.join("<br>")}</div>`;
+      }
+      tooltip.innerHTML = `<strong>${d.player}</strong> (${d.year}, ${d.team})` +
+        (d.was_mvp ? " <strong>★ MVP</strong>" : "") +
+        `<br>${d.pts.toFixed(1)} PTS, ${(d.trb||0).toFixed(1)} TRB, ${(d.ast||0).toFixed(1)} AST` +
+        `<br>${fg}% FG | ${(d.bpm||0).toFixed(1)} BPM, ${(d.ws||0).toFixed(1)} WS` +
+        `<br>Pred share: ${d.predicted_share.toFixed(3)}` +
+        shapHtml;
       tooltip.style.display = "block";
       tooltip.style.left = (e.clientX - rect.left + 14) + "px";
       tooltip.style.top = (e.clientY - rect.top - 10) + "px";
@@ -543,14 +553,14 @@ function drawScatter() {
 
   if (mvpOnly) pool = pool.filter(d => d.was_mvp);
 
-  // Player name filter
+  // Rescale percentiles on the full candidate pool (before player filter)
+  pool = rescalePercentiles(pool);
+
+  // Player name filter — applied after rescaling so positions stay relative to full pool
   const playerQuery = document.getElementById("scatter-player").value.trim().toLowerCase();
   if (playerQuery) {
     pool = pool.filter(d => d.player.toLowerCase().includes(playerQuery));
   }
-
-  // Rescale to 0-100 within the filtered group
-  pool = rescalePercentiles(pool);
 
   // Margins
   const ml = 60, mr = 20, mt = 20, mb = 50;
